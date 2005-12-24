@@ -59,7 +59,7 @@
     Debug.write('CountArray =', CountArray);
     for (var i = 0; i < CountArray.length; i++)
       Debug.write('  [' + i + '] =', CountArray[i]);*/
-    cloud.arrange();
+    cloud.setRange();
     bars.drawGraph();
   ]]></method>
   
@@ -93,7 +93,7 @@
     function long2css(n) {
       var a = "0123456789ABCDEF";
       var s = '#';
-      for (var i = 48; (i -= 8) >= 0; ) {
+      for (var i = 24; (i -= 4) >= 0; ) {
         s += a.charAt((n>>i) & 0xf);
       }
       return s;
@@ -101,7 +101,7 @@
     
     function scaleColor(a, b, s) {
       var n = 0;
-      for (var i = 16; (i -= 8) >= 0; ) {
+      for (var i = 24; (i -= 8) >= 0; ) {
         var ca = (a >> i) & 0xff;
         var cb = (b >> i) & 0xff;
         var cc = Math.floor(ca*(1-s) + cb*s);
@@ -111,10 +111,16 @@
     }
   ]]></script>
   
-  <view id="cloud" width="600" height="200" bgcolor="#e0e0ff">
-    <method name="arrange" event="onclick" args="a,b"><![CDATA[
+  <view id="cloud" width="600" height="200" bgcolor="#f0f0ff">
+    <attribute name="rangeMin" value="null"/>
+    <attribute name="rangeMax" value="null"/>
+    <method name="setRange" args="a,b"><![CDATA[
       if (arguments.length < 1) a = 0;
       if (arguments.length < 2) b = Dates.length;
+      if (a == rangeMin && b == rangeMax) return;
+      this.rangeMin = a;
+      this.rangeMax = b;
+//Debug.write(a, b);
       var tagCounts = canvas.tagTotals(a, b);
 /*Debug.write(canvas.dateSums()[a]);
 Debug.write(CountArray[a]);
@@ -139,7 +145,7 @@ Debug.write(TagSortInverse);*/
         var s = (count - min) / (max - min);
         var c = Math.floor(255*(1-1.0*s));
         var fontsize = 10+12*s;
-        var color = long2css(scaleColor(bgcolor, 0xFFFFff, s));
+        var color = long2css(scaleColor(cloud.bgcolor, 0x0000FF, 0.25+0.75*s));
         str += '<font size=\"' + fontsize + '" color="' + color + '">' + tagname + ' </font>'
       }
       tags.setText(str);
@@ -147,11 +153,11 @@ Debug.write(TagSortInverse);*/
     <text name="tags" multiline="true" width="100%" height="100%"/>
   </view>
   
-  <drawview id="bars" width="600" height="100" y="250" bgcolor="#ffffc0">
+  <drawview id="bars" width="600" height="100" y="200" bgcolor="#ffffc0">
     <method name="drawGraph"><![CDATA[
       var sums = canvas.dateSums();
       var w = this.step = width/sums.length;
-      hi.setAttribute('width', w);
+      selector.setAttribute('width', w);
       var max = 0;
       for (var i = 0; i < sums.length; i++) {
         if (sums[i] > max) max = sums[i];
@@ -169,13 +175,46 @@ Debug.write(TagSortInverse);*/
     ]]></method>
     
     <method event="onclick">
+      return selector.setMyX(getMouse('x'));
       var i = Math.floor(getMouse('x')/this.step);
       //Debug.write(i);
-      hi.animate('x', i*this.step, 500);
-      hi.animate('width', this.step, 400);
-      cloud.arrange(i, i+1);
+      selector.animate('x', i*this.step, 500);
+      selector.animate('width', this.step, 400);
+      cloud.setRange(i, i+1);
     </method>
     
-    <view name="hi" bgcolor="red" opacity="0.25" width="100%" height="${parent.height}+20"/>
+    <view name="selector" bgcolor="red" opacity="0.25" width="100%" height="${parent.height}">
+      <method name="setRange" args="a, b"><![CDATA[
+        if (a < 0) return;
+        if (b >= Dates.length) return;
+        if (a >= b) return;
+        var w = bars.step;
+        animate('x', a*w, 200);
+        animate('width', (b-a)*w, 200);
+        cloud.setRange(a, b);
+      ]]></method>
+      <method name="setMyX" args="x">
+        var w = bars.step;
+        var i = Math.floor(x/w);
+        var j = i + this.width/w;
+        this.setRange(i, j);
+      </method>
+      <!-- bottom dragger -->
+      <view width="100%" height="20" y="${parent.height}" bgcolor="red"
+            onmousedown="startDrag()" onmouseup="d.remove()">
+        <method name="startDrag">
+          d.xstart = parent.parent.getMouse('x');
+          d.apply();
+        </method>
+        <state name="d">
+          <attribute name="xstart" value="parent.parent.getMouse('x')" when="once"/>
+          <attribute name="x" value="${parent.setMyX(parent.parent.getMouse('x'))}"/>
+          <method name="setit" args="x">
+            parent.setMyX(x);
+          </method>
+        </state>
+      </view>
+    </view>
+    
   </drawview>
 </canvas>
