@@ -1,0 +1,167 @@
+<canvas proxied="false">
+  <splash/>
+  <dataset name="ds" src="http:data.xml" request="true" ondata="canvas.process()"/>
+  <!-- dataset name="ds" src="http://del.icio.us/api/posts/all" request="true" ondata="canvas.process()"/-->
+
+  <script>
+    TagList = [];
+    TagMap = {};
+    TagElements = [];
+    Dates = [];
+    DateMap = {}; // {Date -> [tagIndex => count]}
+    CountArray = [];
+  </script>
+  
+  <method name="process"><![CDATA[
+    var posts = ds.data.childNodes;
+    var count = 0;
+    for (var i in posts) {
+      var post = posts[i];
+      var date = post.attributes['time'].split('T')[0];
+      var tags = post.attributes['tag'].split(' ');
+      var di = DateMap[date];
+      if (!(di >= 0)) {
+        DateMap[date] = di = Dates.length;
+        Dates.push(date);
+        CountArray.push([]);
+      }
+      var counts = CountArray[di];
+      for (var j in tags) {
+        var tag = tags[j];
+        var ti = TagMap[tag];
+        if (!(ti >= 0)) {
+          TagMap[tag] = ti = TagList.length;
+          TagList.push(tag);
+        }
+        while (counts.length <= ti) counts.push(0);
+        counts[ti] += 1;
+      }
+      if (++count >= 50) break;
+    }
+    /*Debug.write('TagList =', TagList);
+    Debug.write('TagMap = ', TagMap);
+    Debug.write('Dates =', Dates);
+    Debug.write('DateMap =', DateMap);
+    Debug.write('CountArray =', CountArray);
+    for (var i = 0; i < CountArray.length; i++)
+      Debug.write('  [' + i + '] =', CountArray[i]);*/
+    cloud.arrange();
+    bars.drawGraph();
+  ]]></method>
+  
+  <method name="tagTotals"><![CDATA[
+    var tagCounts = [];
+    for (var i = 0; i < CountArray.length; i++) {
+      var column = CountArray[i];
+      for (var t = 0; t < column.length; t++) {
+        while (t >= tagCounts.length) tagCounts.push(0);
+        tagCounts[t] += 1;
+      }
+    }
+    while (tagCounts.length < TagList.length) tagCounts.push(0);
+    return tagCounts;
+  ]]></method>
+  
+  <method name="dateSums"><![CDATA[
+    var sums = [];
+    for (var i = 0; i < CountArray.length; i++) {
+      var column = CountArray[i];
+      var sum = 0;
+      for (var t = 0; t < column.length; t++) {
+        sum += column[t];
+      }
+      sums.push(sum);
+    }
+    return sums;
+  ]]></method>
+
+  <view id="cloud" width="600" height="200" bgcolor="#e0e0ff">
+    <method name="doLayout"><![CDATA[
+      function setRowYs(row, y) {
+        var mh = 0;
+        for (var i = 0; i < row.length; i++) {
+          var h = row[i].getHeight();
+          if (h > mh) mh = h;
+        }
+        for (var i = 0; i < row.length; i++) {
+          var v = row[i];
+          v.setAttribute('y', y + mh - v.getHeight());
+        }
+        return y + mh;
+      }
+      var x = 0;
+      var y = 0;
+      var row = [];
+      for (var i = 0; i < subviews.length; i++) {
+        var v = subviews[i];
+        if (!v.visible) continue;
+        v.setAttribute('x', x);
+        x += v.width;
+        if (x >= this.width) {
+          if (row.length == 0)
+            row.push(v);
+          else
+            i--;
+          x = 0;
+          y = setRowYs(row, y);
+          row = [];
+        } else {
+          row.push(v);
+        }
+      }
+      y = setRowYs(row, y);
+    ]]></method>
+    
+    <method name="createTagElements"><![CDATA[
+      if (TagElements.length > 0) return;
+      var sorted = [].concat(TagList);
+      sorted.sort();
+      var sortedElements = [];
+      for (var i = 0; i < sorted.length; i++) {
+        sortedElements.push(new LzText(this, {text: sorted[i], resize: true, valign: 'bottom'}));
+      }
+      for (var i = 0; i < TagList.length; i++) {
+        var s = TagList[i];
+        var j = 0;
+        while (sorted[j] != s) j++;
+        TagElements.push(sortedElements[j])
+      }
+    ]]></method>
+    
+    <method name="arrange" event="onclick"><![CDATA[
+      createTagElements();
+      var ar = canvas.tagTotals();
+      var max = 0;
+      for (var i = 0; i < ar.length; i++) if (ar[i] > max) max = ar[i];
+      for (var i = 0; i < ar.length; i++) {
+        var e = TagElements[i];
+        var c = Math.floor(255*(0.5-0.5*ar[i]/max));
+        var color = (0x00 << 16) + (0 << 8) + c;
+        color = (bgcolor & 0xffff00) + Math.floor(255*(ar[i]/max));
+        var fontsize = 8+10*ar[i]/max;
+        e.setAttribute('visible', ar[i] != 0);
+        e.setAttribute('fgcolor', color);
+        e.setAttribute('fontsize', fontsize);
+        e.setAttribute('height', fontsize*54/36);
+      }
+      doLayout();
+    ]]></method>
+  </view>
+  
+  <drawview id="bars" width="600" height="100" y="250" bgcolor="#ffffc0">
+    <method name="drawGraph" event="onclick"><![CDATA[
+      var ar = canvas.dateSums();
+      var max = 0;
+      for (var i = 0; i < ar.length; i++)
+          if (ar[i] > max) max = ar[i];
+      beginPath();
+      for (var i = 0; i < ar.length; i++) {
+        var x = i*width/(ar.length - 1);
+        var y = ar[i]*height/max;
+        if (i == 0) {moveTo(x, y)} else {lineTo(x, y);}
+      }
+      this.strokeStyle = 0xff8080;
+      this.stroke();
+    ]]></method>
+  </drawview>
+</canvas>
