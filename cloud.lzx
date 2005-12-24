@@ -13,11 +13,13 @@
     CountArray = [];
     SortedTags = [];
     TagSortInverse = [];
+    function getNow() {return (new Date).getTime()}
   </script>
   
   <method name="process"><![CDATA[
     var posts = ds.data.childNodes;
     var count = 0;
+var t0 = getNow();
     for (var i in posts) {
       var post = posts[i];
       var date = post.attributes['time'].split('T')[0];
@@ -59,8 +61,12 @@
     Debug.write('CountArray =', CountArray);
     for (var i = 0; i < CountArray.length; i++)
       Debug.write('  [' + i + '] =', CountArray[i]);*/
+var t1, t2;
+Debug.write('init', t1 = getNow() - t0);
     cloud.setRange();
+Debug.write('cloud', t2 = getNow() - t1);
     bars.drawGraph();
+Debug.write('bars', getNow() - t2);
   ]]></method>
   
   <method name="tagTotals" args="a, b"><![CDATA[
@@ -121,7 +127,9 @@
       this.rangeMin = a;
       this.rangeMax = b;
 //Debug.write(a, b);
+var t0 = getNow();
       var tagCounts = canvas.tagTotals(a, b);
+Debug.write('totals', getNow() - t0);
 /*Debug.write(canvas.dateSums()[a]);
 Debug.write(CountArray[a]);
 Debug.write(tagCounts);
@@ -184,34 +192,36 @@ Debug.write(TagSortInverse);*/
     </method>
     
     <view name="selector" bgcolor="red" opacity="0.25" width="100%" height="${parent.height}">
-      <method name="setRange" args="a, b"><![CDATA[
-        if (a < 0) return;
-        if (b >= Dates.length) return;
-        if (a >= b) return;
+      <method name="setRange" args="d0, d1"><![CDATA[
+        if (d0 < 0) return;
+        if (d1 >= Dates.length) return;
+        if (d0 >= d1) return;
         var w = bars.step;
-        animate('x', a*w, 200);
-        animate('width', (b-a)*w, 200);
-        cloud.setRange(a, b);
+        animate('x', d0*w, 200);
+        animate('width', (d1-d0)*w, 200);
+        cloud.setRange(d0, d1);
       ]]></method>
-      <method name="setMyX" args="x">
+      <method name="setXRange" args="x0, x1">
         var w = bars.step;
-        var i = Math.floor(x/w);
-        var j = i + this.width/w;
-        this.setRange(i, j);
+        if (x0 == null) x0 = this.x;
+        if (x1 == null) x1 = x0 + this.width;
+        var d0 = Math.floor(x0/w);
+        var d1 = Math.floor(x1/w);
+        this.setRange(d0, d1);
       </method>
+      <!-- right dragger -->
+      <view width="10" height="20" x="${parent.width}" y="${parent.height/2}" bgcolor="red"
+            onmousedown="d.apply()" onmouseup="d.remove()">
+        <state name="d">
+          <attribute name="x" value="${parent.setXRange(null, parent.parent.getMouse('x'))}"/>
+        </state>
+      </view>
       <!-- bottom dragger -->
       <view width="100%" height="20" y="${parent.height}" bgcolor="red"
-            onmousedown="startDrag()" onmouseup="d.remove()">
-        <method name="startDrag">
-          d.xstart = parent.parent.getMouse('x');
-          d.apply();
-        </method>
+            resource="handle.swf"
+            onmousedown="d.apply()" onmouseup="d.remove()">
         <state name="d">
-          <attribute name="xstart" value="parent.parent.getMouse('x')" when="once"/>
-          <attribute name="x" value="${parent.setMyX(parent.parent.getMouse('x'))}"/>
-          <method name="setit" args="x">
-            parent.setMyX(x);
-          </method>
+          <attribute name="x" value="${parent.setXRange(parent.parent.getMouse('x'), null)}"/>
         </state>
       </view>
     </view>
