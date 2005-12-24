@@ -1,8 +1,8 @@
 <canvas proxied="false">
   <include href="debugger/debugger.lzx"/>
   <splash/>
-  <dataset name="ds" src="http:data.xml" request="true" ondata="canvas.process()"/>
-  <!-- dataset name="ds" src="http://del.icio.us/api/posts/all" request="true" ondata="canvas.process()"/-->
+  <dataset name="ds" src="http:data.xml" request="true" ondata="canvas.processTags()"/>
+  <!-- dataset name="ds" src="http://del.icio.us/api/posts/all" request="true" ondata="canvas.processTags()"/-->
 
   <script>
     TagList = [];
@@ -16,10 +16,9 @@
     function getNow() {return (new Date).getTime()}
   </script>
   
-  <method name="process"><![CDATA[
+  <method name="processTags"><![CDATA[
     var posts = ds.data.childNodes;
     var count = 0;
-var t0 = getNow();
     for (var i in posts) {
       var post = posts[i];
       var date = post.attributes['time'].split('T')[0];
@@ -41,32 +40,20 @@ var t0 = getNow();
         while (counts.length <= ti) counts.push(0);
         counts[ti] += 1;
       }
-      if (++count >= 150) break;
+      //if (++count >= 150) break;
     }
-
-      SortedTags = [].concat(TagList);
-      SortedTags.sort();
-      TagSortInverse = [];
-      for (var i = 0; i < SortedTags.length; i++) {
-        var tagname = SortedTags[i];
-        var j = 0;
-        while (TagList[j] != tagname) j++;
-        TagSortInverse.push(j);
-      }
-      
-    /*Debug.write('TagList =', TagList);
-    Debug.write('TagMap = ', TagMap);
-    Debug.write('Dates =', Dates);
-    Debug.write('DateMap =', DateMap);
-    Debug.write('CountArray =', CountArray);
-    for (var i = 0; i < CountArray.length; i++)
-      Debug.write('  [' + i + '] =', CountArray[i]);*/
-var t1, t2;
-Debug.write('init', t1 = getNow() - t0);
+    
+    SortedTags = [].concat(TagList);
+    SortedTags.sort();
+    TagSortInverse = [];
+    for (var i = 0; i < SortedTags.length; i++) {
+      var tagname = SortedTags[i];
+      var j = 0;
+      while (TagList[j] != tagname) j++;
+      TagSortInverse.push(j);
+    }
     cloud.setRange();
-Debug.write('cloud', t2 = getNow() - t1);
     bars.drawGraph();
-Debug.write('bars', getNow() - t2);
   ]]></method>
   
   <method name="tagTotals" args="a, b"><![CDATA[
@@ -126,16 +113,7 @@ Debug.write('bars', getNow() - t2);
       if (a == rangeMin && b == rangeMax) return;
       this.rangeMin = a;
       this.rangeMax = b;
-//Debug.write(a, b);
-var t0 = getNow();
       var tagCounts = canvas.tagTotals(a, b);
-Debug.write('totals', getNow() - t0);
-/*Debug.write(canvas.dateSums()[a]);
-Debug.write(CountArray[a]);
-Debug.write(tagCounts);
-Debug.write(TagList);
-Debug.write(SortedTags);
-Debug.write(TagSortInverse);*/
       
       var max = 0;
       var min = 100;
@@ -165,7 +143,6 @@ Debug.write(TagSortInverse);*/
     <method name="drawGraph"><![CDATA[
       var sums = canvas.dateSums();
       var w = this.step = width/sums.length;
-      selector.setAttribute('width', w);
       var max = 0;
       for (var i = 0; i < sums.length; i++) {
         if (sums[i] > max) max = sums[i];
@@ -180,18 +157,14 @@ Debug.write(TagSortInverse);*/
       }
       this.strokeStyle = 0xff8080;
       this.stroke();
+      selector.setRange(0, sums.length);
     ]]></method>
     
     <method event="onclick">
-      return selector.setMyX(getMouse('x'));
-      var i = Math.floor(getMouse('x')/this.step);
-      //Debug.write(i);
-      selector.animate('x', i*this.step, 500);
-      selector.animate('width', this.step, 400);
-      cloud.setRange(i, i+1);
+      selector.setXRange(getMouse('x'), null);
     </method>
     
-    <view name="selector" bgcolor="red" opacity="0.25" width="100%" height="${parent.height}">
+    <view name="selector" bgcolor="red" opacity="0.25" height="${parent.height}">
       <method name="setRange" args="d0, d1"><![CDATA[
         if (d0 < 0) return;
         if (d1 >= Dates.length) return;
@@ -217,9 +190,9 @@ Debug.write(TagSortInverse);*/
         </state>
       </view>
       <!-- bottom dragger -->
-      <view width="100%" height="20" y="${parent.height}" bgcolor="red"
-            resource="handle.swf"
-            onmousedown="d.apply()" onmouseup="d.remove()">
+      <view y="${parent.height}"
+            onmousedown="this.sx = parent.parent.getMouse('x'); d.apply()" onmouseup="d.remove()"
+            resource="scrolldragdimples.swf">
         <state name="d">
           <attribute name="x" value="${parent.setXRange(parent.parent.getMouse('x'), null)}"/>
         </state>
