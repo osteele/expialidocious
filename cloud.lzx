@@ -1,3 +1,19 @@
+<!--
+Must:
+- bottom dragger
+- right dragger
+- show dates
+- variable-height cloud
+- live feed
+
+Nice:
+- animate in graph
+- mouseover graph
+- hover tags
+- clickable tags
+- check large tags
+- update during animation
+-->
 <canvas proxied="false">
   <include href="debugger/debugger.lzx"/>
   <splash/>
@@ -13,6 +29,7 @@
     CountArray = [];
     SortedTags = [];
     TagSortInverse = [];
+    MaxTag = 0;
     function getNow() {return (new Date).getTime()}
   </script>
   
@@ -38,7 +55,8 @@
           TagList.push(tag);
         }
         while (counts.length <= ti) counts.push(0);
-        counts[ti] += 1;
+        c = counts[ti] += 1;
+        if (c > MaxTag) MaxTag = c;
       }
       //if (++count >= 150) break;
     }
@@ -52,8 +70,10 @@
       while (TagList[j] != tagname) j++;
       TagSortInverse.push(j);
     }
-    cloud.setRange();
+    //cloud.setRange(0, Dates.length);
     bars.drawGraph();
+    bars.selector.setRange(0, Dates.length);
+    mylines.drawme();
   ]]></method>
   
   <method name="tagTotals" args="a, b"><![CDATA[
@@ -139,7 +159,7 @@
     <text name="tags" multiline="true" width="100%" height="100%"/>
   </view>
   
-  <drawview id="bars" width="600" height="100" y="200" bgcolor="#ffffc0">
+  <drawview id="bars" y="210" width="600" height="100" bgcolor="#ffffc0">
     <method name="drawGraph"><![CDATA[
       var sums = canvas.dateSums();
       var w = this.step = width/sums.length;
@@ -151,7 +171,7 @@
       for (var i = 0; i < sums.length; i++) {
         var x = i*w;
         var y = height - sums[i]*height/max;
-        if (i == 0) {moveTo(0, y)}
+        if (i == 0) {moveTo(x, y)}
         lineTo(x,y);
         lineTo(x+w,y);
       }
@@ -167,7 +187,7 @@
     <view name="selector" bgcolor="red" opacity="0.25" height="${parent.height}">
       <method name="setRange" args="d0, d1"><![CDATA[
         if (d0 < 0) return;
-        if (d1 >= Dates.length) return;
+        if (d1 > Dates.length) return;
         if (d0 >= d1) return;
         var w = bars.step;
         animate('x', d0*w, 200);
@@ -190,14 +210,63 @@
         </state>
       </view>
       <!-- bottom dragger -->
-      <view y="${parent.height}"
-            onmousedown="this.sx = parent.parent.getMouse('x'); d.apply()" onmouseup="d.remove()"
-            resource="scrolldragdimples.swf">
+      <view y="${parent.height}" width="40"
+            onmousedown="this.sx = parent.x - parent.parent.getMouse('x'); d.apply()"
+            onmouseup="d.remove()"
+            resource="scrolldraghorz.swf" stretches="width">
+        <!--view resource="scrolldragdimples.swf"/-->
         <state name="d">
-          <attribute name="x" value="${parent.setXRange(parent.parent.getMouse('x'), null)}"/>
+          <attribute name="x" value="${parent.setXRange(this.sx+parent.parent.getMouse('x'), null)}"/>
         </state>
       </view>
     </view>
-    
   </drawview>
+  
+<?ignore
+  <drawview id="mylines" y="${bars.y + bars.height+20}"
+            width="${bars.width}" height="350" bgcolor="yellow">
+    <attribute name="row" value="0"/>
+    <method event="onclick">
+      row = ++row % TagList.length;
+      clear();
+      drawme();
+    </method>
+    <method name="drawme"><![CDATA[
+      var w = this.width/CountArray.length;
+      var h = this.height/TagList.length*2;
+      for (var j = 0; j < TagList.length/2; j++) {
+        //if (j != row) continue;
+        var y = (j+0.5)*h;
+        Debug.write(y);
+        beginPath();
+        for (var i = 0; i < CountArray.length; i++) {
+          var s = CountArray[i][j]/MaxTag;
+          if (s == undefined) s = 0;
+          var x = i*w;
+          if (i == 0) moveTo(x, y);
+          var y0 = y - s*h/2;
+          //Debug.write(c, y, y0);
+          lineTo(x+w/2, y0);
+        }
+        lineTo(x+w, y0);
+        lineTo(x+w, y0*2-y);
+        /*for (var i = CountArray.length; --i; ) {
+          var c = CountArray[i][j];
+          var x = i*w;
+          var y1 = y;
+          var ww = c*h/MaxTag/2;
+          ww = i*5/CountArray.length;
+          y1 += ww/2;
+          lineTo(x+w/2, y1);
+        }*/
+        lineTo(0, y);
+        closePath();
+        this.fillStyle = 0x0000ff;
+        this.fill();
+      }
+    ]]></method>
+  </drawview>
+?>
+  
+  <debug x="610"/>
 </canvas>
