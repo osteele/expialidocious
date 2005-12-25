@@ -15,114 +15,19 @@ Nice:
 - update during animation
 -->
 <canvas proxied="false">
-  <include href="debugger/debugger.lzx"/>
+  <script src="analyzer.js"/>
+  <script src="colors.js"/>
   <splash/>
+  
   <dataset name="ds" src="http:data.xml" request="true" ondata="canvas.processTags()"/>
   <!-- dataset name="ds" src="http://del.icio.us/api/posts/all" request="true" ondata="canvas.processTags()"/-->
-
-  <script>
-    TagList = [];
-    TagMap = {};
-    TagElements = [];
-    Dates = [];
-    DateMap = {}; // {Date -> [tagIndex => count]}
-    CountArray = [];
-    SortedTags = [];
-    TagSortInverse = [];
-    MaxTag = 0;
-    function getNow() {return (new Date).getTime()}
-  </script>
   
-  <method name="processTags"><![CDATA[
-    var posts = ds.data.childNodes;
-    var count = 0;
-    for (var i in posts) {
-      var post = posts[i];
-      var date = post.attributes['time'].split('T')[0];
-      var tags = post.attributes['tag'].split(' ');
-      var di = DateMap[date];
-      if (!(di >= 0)) {
-        DateMap[date] = di = Dates.length;
-        Dates.push(date);
-        CountArray.push([]);
-      }
-      var counts = CountArray[di];
-      for (var j in tags) {
-        var tag = tags[j];
-        var ti = TagMap[tag];
-        if (!(ti >= 0)) {
-          TagMap[tag] = ti = TagList.length;
-          TagList.push(tag);
-        }
-        while (counts.length <= ti) counts.push(0);
-        c = counts[ti] += 1;
-        if (c > MaxTag) MaxTag = c;
-      }
-      //if (++count >= 150) break;
-    }
-    
-    SortedTags = [].concat(TagList);
-    SortedTags.sort();
-    TagSortInverse = [];
-    for (var i = 0; i < SortedTags.length; i++) {
-      var tagname = SortedTags[i];
-      var j = 0;
-      while (TagList[j] != tagname) j++;
-      TagSortInverse.push(j);
-    }
-    //cloud.setRange(0, Dates.length);
+  <method name="processTags" args="ds">
+    TagData.processTags(ds.data);
     bars.drawGraph();
     bars.selector.setRange(0, Dates.length);
-    mylines.drawme();
-  ]]></method>
-  
-  <method name="tagTotals" args="a, b"><![CDATA[
-    var tagCounts = [];
-    for (var i = a; i < b; i++) {
-      var column = CountArray[i];
-      for (var t = 0; t < column.length; t++) {
-        while (t >= tagCounts.length) tagCounts.push(0);
-        tagCounts[t] += column[t];
-      }
-    }
-    while (tagCounts.length < TagList.length) tagCounts.push(0);
-    return tagCounts;
-  ]]></method>
-  
-  <method name="dateSums"><![CDATA[
-    var sums = [];
-    for (var i = 0; i < CountArray.length; i++) {
-      var column = CountArray[i];
-      var sum = 0;
-      for (var t = 0; t < column.length; t++) {
-        sum += column[t];
-      }
-      sums.push(sum);
-    }
-    return sums;
-  ]]></method>
-  
-  <script><![CDATA[
-    function long2css(n) {
-      var a = "0123456789ABCDEF";
-      var s = '#';
-      for (var i = 24; (i -= 4) >= 0; ) {
-        s += a.charAt((n>>i) & 0xf);
-      }
-      return s;
-    }
-    
-    function scaleColor(a, b, s) {
-      var n = 0;
-      for (var i = 24; (i -= 8) >= 0; ) {
-        var ca = (a >> i) & 0xff;
-        var cb = (b >> i) & 0xff;
-        var cc = Math.floor(ca*(1-s) + cb*s);
-        n |= cc << i;
-      }
-      return n;
-    }
-  ]]></script>
+    //mylines.drawme();
+  </method>
   
   <view id="cloud" width="600" height="200" bgcolor="#f0f0ff">
     <attribute name="rangeMin" value="null"/>
@@ -133,7 +38,7 @@ Nice:
       if (a == rangeMin && b == rangeMax) return;
       this.rangeMin = a;
       this.rangeMax = b;
-      var tagCounts = canvas.tagTotals(a, b);
+      var tagCounts = TagData.tagTotals(a, b);
       
       var max = 0;
       var min = 100;
@@ -161,7 +66,7 @@ Nice:
   
   <drawview id="bars" y="210" width="600" height="100" bgcolor="#ffffc0">
     <method name="drawGraph"><![CDATA[
-      var sums = canvas.dateSums();
+      var sums = TagData.dateSums();
       var w = this.step = width/sums.length;
       var max = 0;
       for (var i = 0; i < sums.length; i++) {
@@ -213,7 +118,7 @@ Nice:
       <view y="${parent.height}" width="40"
             onmousedown="this.sx = parent.x - parent.parent.getMouse('x'); d.apply()"
             onmouseup="d.remove()"
-            resource="scrolldraghorz.swf" stretches="width">
+            resource="handle.png">
         <!--view resource="scrolldragdimples.swf"/-->
         <state name="d">
           <attribute name="x" value="${parent.setXRange(this.sx+parent.parent.getMouse('x'), null)}"/>
@@ -221,52 +126,6 @@ Nice:
       </view>
     </view>
   </drawview>
-  
-<?ignore
-  <drawview id="mylines" y="${bars.y + bars.height+20}"
-            width="${bars.width}" height="350" bgcolor="yellow">
-    <attribute name="row" value="0"/>
-    <method event="onclick">
-      row = ++row % TagList.length;
-      clear();
-      drawme();
-    </method>
-    <method name="drawme"><![CDATA[
-      var w = this.width/CountArray.length;
-      var h = this.height/TagList.length*2;
-      for (var j = 0; j < TagList.length/2; j++) {
-        //if (j != row) continue;
-        var y = (j+0.5)*h;
-        Debug.write(y);
-        beginPath();
-        for (var i = 0; i < CountArray.length; i++) {
-          var s = CountArray[i][j]/MaxTag;
-          if (s == undefined) s = 0;
-          var x = i*w;
-          if (i == 0) moveTo(x, y);
-          var y0 = y - s*h/2;
-          //Debug.write(c, y, y0);
-          lineTo(x+w/2, y0);
-        }
-        lineTo(x+w, y0);
-        lineTo(x+w, y0*2-y);
-        /*for (var i = CountArray.length; --i; ) {
-          var c = CountArray[i][j];
-          var x = i*w;
-          var y1 = y;
-          var ww = c*h/MaxTag/2;
-          ww = i*5/CountArray.length;
-          y1 += ww/2;
-          lineTo(x+w/2, y1);
-        }*/
-        lineTo(0, y);
-        closePath();
-        this.fillStyle = 0x0000ff;
-        this.fill();
-      }
-    ]]></method>
-  </drawview>
-?>
   
   <debug x="610"/>
 </canvas>

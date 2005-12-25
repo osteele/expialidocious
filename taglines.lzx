@@ -1,0 +1,44 @@
+
+  <drawview id="mylines" y="${bars.y + bars.height+20}"
+            width="${bars.width}" height="350" bgcolor="yellow">
+    <attribute name="row" value="0"/>
+    <method event="onclick">
+      row = ++row % TagList.length;
+      clear();
+      drawme();
+    </method>
+    <method name="drawme"><![CDATA[
+      var w = this.width/CountArray.length;
+      var h = this.height/TagList.length*2;
+      for (var j = 0; j < TagList.length/2; j++) {
+        //if (j != row) continue;
+        var y = (j+0.5)*h;
+        Debug.write(y);
+        beginPath();
+        for (var i = 0; i < CountArray.length; i++) {
+          var s = CountArray[i][j]/MaxTag;
+          if (s == undefined) s = 0;
+          var x = i*w;
+          if (i == 0) moveTo(x, y);
+          var y0 = y - s*h/2;
+          //Debug.write(c, y, y0);
+          lineTo(x+w/2, y0);
+        }
+        lineTo(x+w, y0);
+        lineTo(x+w, y0*2-y);
+        /*for (var i = CountArray.length; --i; ) {
+          var c = CountArray[i][j];
+          var x = i*w;
+          var y1 = y;
+          var ww = c*h/MaxTag/2;
+          ww = i*5/CountArray.length;
+          y1 += ww/2;
+          lineTo(x+w/2, y1);
+        }*/
+        lineTo(0, y);
+        closePath();
+        this.fillStyle = 0x0000ff;
+        this.fill();
+      }
+    ]]></method>
+  </drawview>
