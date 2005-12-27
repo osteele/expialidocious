@@ -1,8 +1,10 @@
 <!--
 Must:
-- faster
-- variable-height cloud: put it in the html
+- funnel
+- better colors
 - show dates
+- rank sizes
+- live feed (below)
 
 Live feed:
 client:
@@ -18,15 +20,21 @@ Publish:
 - wiki page
 
 Nice:
+- tooltips for cloud
+- skip rhs of left dragger
+- tooltips for buttons
 - animate in graph
 - mouseover graph
 - hover tags
 - clickable tags
 - check large tags
 - update during animation
+- drag the selector itself
+- funnel
 - grippers on thumbs
 -->
 <canvas proxied="true">
+  <include href="incubator/tooltip/tooltip.lzx"/>
   <script src="analyzer.js"/>
   <script src="base64.js"/>
   <script src="colors.js"/>
@@ -46,16 +54,16 @@ Nice:
     TagData = new DataFrame;
     TagData.processTags(ds.data);
     bars.drawGraph();
-    bars.selector.setRange(0, TagData.columnNames.length);
+    bars.selector.setRange(0, TagData.columns.length);
     //mylines.drawme();
   </method>
   
-  <view id="cloud" width="100%" height="200" bgcolor="#f0f0ff">
+  <view id="cloud" width="${parent.width-20}" x="10" height="200" bgcolor="#f0f0ff">
     <attribute name="rangeMin" value="null"/>
     <attribute name="rangeMax" value="null"/>
     <method name="setRange" args="a,b"><![CDATA[
       if (arguments.length < 1) a = 0;
-      if (arguments.length < 2) b = TagData.columnNames.length;
+      if (arguments.length < 2) b = TagData.columns.length;
       if (a == rangeMin && b == rangeMax) return;
       this.rangeMin = a;
       this.rangeMax = b;
@@ -118,7 +126,7 @@ Nice:
   
   <drawview id="bars"
             y="210" x="10" width="${parent.width-20}" height="100"
-            bgcolor="#ffffc0">
+            bgcolor="#f0f0ff">
     <method name="drawGraph"><![CDATA[
       var sums = TagData.dateSums();
       var w = this.step = width/sums.length;
@@ -134,7 +142,7 @@ Nice:
         lineTo(x,y);
         lineTo(x+w,y);
       }
-      this.strokeStyle = 0xff8080;
+      this.strokeStyle = 0x8080ff;
       this.stroke();
       selector.setRange(0, sums.length);
     ]]></method>
@@ -143,10 +151,10 @@ Nice:
       selector.setXRange(getMouse('x'), null);
     </method>
     
-    <view name="selector" height="${parent.height}">
+    <view name="selector" height="100%">
       <method name="setRange" args="d0, d1"><![CDATA[
         if (d0 < 0) return;
-        if (d1 > TagData.columnNames.length) return;
+        if (d1 > TagData.columns.length) return;
         if (d0 >= d1) return;
         var w = bars.step;
         animate('x', d0*w, 200);
@@ -162,7 +170,27 @@ Nice:
         this.setRange(d0, d1);
       </method>
       
-      <view bgcolor="red" opacity="0.25" height="100%" width="100%"/>
+      <!--view bgcolor="red" opacity="0.25" height="100%" width="100%"/-->
+      <!--view bgcolor="white" opacity="0.25" height="80%" width="40%" x="40%" y="10%"/-->
+      
+      <!--drawview width="100%" height="20" y="-20">
+        <method event="onx">f()</method>
+        <method event="onx">f()</method>
+        <method name="f" event="oninit">
+          beginPath();
+          moveTo(0, height);
+          lineTo(-parent.x, 0);
+          stroke();
+        </method>
+      </drawview-->
+      
+      <!-- masks -->
+      <view x="${-parent.x}" width="${parent.x}" height="100%"
+            bgcolor="gray" opacity="0.40"/>
+      <view x="${parent.width}"
+            width="${parent.parent.width-parent.x-parent.width}"
+            height="100%"
+            bgcolor="gray" opacity="0.40"/>
       
       <!-- left dragger -->
       <thumb x="-10" width="10" height="20"
@@ -192,6 +220,7 @@ Nice:
              onmouseup="drag.remove()"
              side="bottom"
              opacity="${parent.width==parent.parent.width ? 0.25 : 1.0}">
+        <tooltip name="tip">Drag this to select a different range of dates.</tooltip>
         <state name="drag">
           <attribute name="x"
 		     value="${parent.setXRange(this.sx+parent.parent.getMouse('x'), null)}"/>
