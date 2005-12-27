@@ -98,6 +98,7 @@ Nice:
     <method name="drawContour" args="dx,dy">
       var tl=0, tr=0, bl=0, br=0;
       if (side == 'bottom') bl=br=1;
+      if (side == 'right') tr=br=1;
       var rx = 10;
       var ry = height/2;
       beginPath();
@@ -106,7 +107,8 @@ Nice:
       if (bl) quadraticCurveTo(dx, height+dy, rx+dx, height+dy);
       lineTo(width-br*rx+dx, height+dy);
       if (br) quadraticCurveTo(width+dx, height+dy, width+dx, ry+dy);
-      lineTo(width+dx, 0+dy);
+      lineTo(width+dx, ry*tr+dy);
+      if (tr) quadraticCurveTo(width+dx, 0+dy, width-rx+dx, 0+dy);
       lineTo(dx, dy);
     </method>
   </class>
@@ -158,12 +160,13 @@ Nice:
       <view bgcolor="red" opacity="0.25" height="100%" width="100%"/>
       
       <!-- right dragger -->
-      <view width="10" height="20" x="${parent.width}" y="${parent.height/2}" bgcolor="red"
-            onmousedown="d.apply()" onmouseup="d.remove()">
-        <state name="d">
+      <thumb width="10" height="20" x="${parent.width}"
+             valign="middle" side="right"
+             onmousedown="drag.apply()" onmouseup="drag.remove()">
+        <state name="drag">
           <attribute name="x" value="${parent.setXRange(null, parent.parent.getMouse('x'))}"/>
         </state>
-      </view>
+      </thumb>
       
       <!-- bottom dragger -->
       <thumb id="bd" width="40" height="10" y="${parent.height}"
