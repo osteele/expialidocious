@@ -1,7 +1,6 @@
 <!--
 Must:
-- bottom dragger: try smaller non-opaque asset
-- right dragger: after bottom dragger is done
+- faster
 - variable-height cloud: put it in the html
 - show dates
 
@@ -25,6 +24,7 @@ Nice:
 - clickable tags
 - check large tags
 - update during animation
+- grippers on thumbs
 -->
 <canvas proxied="true">
   <script src="analyzer.js"/>
@@ -43,18 +43,19 @@ Nice:
   </script>
   
   <method name="processTags">
+    TagData = new DataFrame;
     TagData.processTags(ds.data);
     bars.drawGraph();
-    bars.selector.setRange(0, Dates.length);
+    bars.selector.setRange(0, TagData.columnNames.length);
     //mylines.drawme();
   </method>
   
-  <view id="cloud" width="600" height="200" bgcolor="#f0f0ff">
+  <view id="cloud" width="100%" height="200" bgcolor="#f0f0ff">
     <attribute name="rangeMin" value="null"/>
     <attribute name="rangeMax" value="null"/>
     <method name="setRange" args="a,b"><![CDATA[
       if (arguments.length < 1) a = 0;
-      if (arguments.length < 2) b = Dates.length;
+      if (arguments.length < 2) b = TagData.columnNames.length;
       if (a == rangeMin && b == rangeMax) return;
       this.rangeMin = a;
       this.rangeMax = b;
@@ -98,22 +99,26 @@ Nice:
     <method name="drawContour" args="dx,dy">
       var tl=0, tr=0, bl=0, br=0;
       if (side == 'bottom') bl=br=1;
+      if (side == 'left') tl=bl=1;
       if (side == 'right') tr=br=1;
       var rx = 10;
       var ry = height/2;
       beginPath();
-      moveTo(dx, dy);
+      moveTo(dx+tl*rx, dy);
+      if (tl) quadraticCurveTo(dx, dy, dx, ry+dy);
       moveTo(dx, height-bl*ry+dy);
       if (bl) quadraticCurveTo(dx, height+dy, rx+dx, height+dy);
       lineTo(width-br*rx+dx, height+dy);
       if (br) quadraticCurveTo(width+dx, height+dy, width+dx, ry+dy);
       lineTo(width+dx, ry*tr+dy);
       if (tr) quadraticCurveTo(width+dx, 0+dy, width-rx+dx, 0+dy);
-      lineTo(dx, dy);
+      lineTo(dx+tl*rx, dy);
     </method>
   </class>
   
-  <drawview id="bars" y="210" width="600" height="100" bgcolor="#ffffc0">
+  <drawview id="bars"
+            y="210" x="10" width="${parent.width-20}" height="100"
+            bgcolor="#ffffc0">
     <method name="drawGraph"><![CDATA[
       var sums = TagData.dateSums();
       var w = this.step = width/sums.length;
@@ -141,7 +146,7 @@ Nice:
     <view name="selector" height="${parent.height}">
       <method name="setRange" args="d0, d1"><![CDATA[
         if (d0 < 0) return;
-        if (d1 > Dates.length) return;
+        if (d1 > TagData.columnNames.length) return;
         if (d0 >= d1) return;
         var w = bars.step;
         animate('x', d0*w, 200);
@@ -159,6 +164,17 @@ Nice:
       
       <view bgcolor="red" opacity="0.25" height="100%" width="100%"/>
       
+      <!-- left dragger -->
+      <thumb x="-10" width="10" height="20"
+             valign="middle" side="left"
+             onmousedown="this.x1 = parent.x+parent.width;
+                          drag.apply()"
+             onmouseup="drag.remove()">
+        <state name="drag">
+          <attribute name="x" value="${parent.setXRange(parent.parent.getMouse('x'), this.x1)}"/>
+        </state>
+      </thumb>
+      
       <!-- right dragger -->
       <thumb width="10" height="20" x="${parent.width}"
              valign="middle" side="right"
@@ -175,7 +191,7 @@ Nice:
                           drag.apply()"
              onmouseup="drag.remove()"
              side="bottom"
-             opacity="${parent.width==parent.parent.width ? 0.5 : 1.0}">
+             opacity="${parent.width==parent.parent.width ? 0.25 : 1.0}">
         <state name="drag">
           <attribute name="x"
 		     value="${parent.setXRange(this.sx+parent.parent.getMouse('x'), null)}"/>
