@@ -84,6 +84,33 @@ Nice:
     <text name="tags" multiline="true" width="100%" height="100%"/>
   </view>
   
+  <class name="thumb" extends="drawview">
+    <attribute name="side" type="string"/>
+    <method event="oninit">
+      drawContour(0.5,0.5);
+      closePath();
+      this.strokeStyle = 0x802020;
+      stroke();
+      drawContour(0,0);
+      this.fillStyle = 0xf08080;
+      fill();
+    </method>
+    <method name="drawContour" args="dx,dy">
+      var tl=0, tr=0, bl=0, br=0;
+      if (side == 'bottom') bl=br=1;
+      var rx = 10;
+      var ry = height/2;
+      beginPath();
+      moveTo(dx, dy);
+      moveTo(dx, height-bl*ry+dy);
+      if (bl) quadraticCurveTo(dx, height+dy, rx+dx, height+dy);
+      lineTo(width-br*rx+dx, height+dy);
+      if (br) quadraticCurveTo(width+dx, height+dy, width+dx, ry+dy);
+      lineTo(width+dx, 0+dy);
+      lineTo(dx, dy);
+    </method>
+  </class>
+  
   <drawview id="bars" y="210" width="600" height="100" bgcolor="#ffffc0">
     <method name="drawGraph"><![CDATA[
       var sums = TagData.dateSums();
@@ -139,51 +166,18 @@ Nice:
       </view>
       
       <!-- bottom dragger -->
-      <drawview id="bd" width="40" height="10" y="${parent.height}"
-		x="${(parent.parent.width/2-width)/2}"
-		onmousedown="this.sx = parent.x - parent.parent.getMouse('x');
-			     drag.apply()"
-		onmouseup="drag.remove()"
-		opacity="${parent.width==parent.parent.width ? 0.5 : 1.0}">
-	<method event="oninit">
-	  clear(); drawme();
-	</method>
-	<method name="curvy" args="dx,dy">
-	  var rx = 10;
-	  var ry = height/2;
-	  beginPath();
-	  moveTo(dx, dy);
-	  quadraticCurveTo(rx+dx, 0+dy, rx+dx, ry+dy);
-	  quadraticCurveTo(rx+dx, height+dy, rx*2+dx, height+dy);
-	  lineTo(width-rx*2+dx, height+dy);
-	  quadraticCurveTo(width-rx+dx, height+dy, width-rx+dx, height-ry+dy);
-	  quadraticCurveTo(width-rx+dx, 0+dy, width+dx, 0+dy);
-	</method>
-	<method name="drawme">
-	  curvy(0.5,0.5);
-	  closePath();
-	  this.strokeStyle = 0x202020;
-	  stroke();
-	  curvy(0,0);
-	  this.fillStyle = 0xd0d0d0;
-	  fill();
-	  this.fillStyle = 0x000000;
-	  drawBubbles(1);
-	  this.fillStyle = 0xffffff;
-	  drawBubbles(0);
-	</method>
-	<method name="drawBubbles" args="dy"><![CDATA[
-	  beginPath();
-	  for (var x = 13; x <= width-13; x+=3)
-	  for (var y = 1; y < height-3; y+=3)
-	  this.oval(x,y+dy,0.75);
-	  fill();
-	]]></method>
+      <thumb id="bd" width="40" height="10" y="${parent.height}"
+             align="center"
+             onmousedown="this.sx = parent.x - parent.parent.getMouse('x');
+                          drag.apply()"
+             onmouseup="drag.remove()"
+             side="bottom"
+             opacity="${parent.width==parent.parent.width ? 0.5 : 1.0}">
         <state name="drag">
           <attribute name="x"
 		     value="${parent.setXRange(this.sx+parent.parent.getMouse('x'), null)}"/>
         </state>
-      </drawview>
+      </thumb>
     </view>
   </drawview>
   
