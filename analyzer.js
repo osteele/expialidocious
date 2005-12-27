@@ -9,8 +9,8 @@ TagSortInverse = [];
 MaxTag = 0;
 
 var TagData = {
-  processTags: function() {
-    var posts = ds.data.childNodes;
+  processTags: function(data) {
+    var posts = data.childNodes;
     var count = 0;
     for (var i in posts) {
       var post = posts[i];
@@ -71,5 +71,15 @@ var TagData = {
       sums.push(sum);
     }
     return sums;
-  }
+  },
+  
+  tagsForDate: function (day) {
+		var tags = {};
+		var tagCounts = CountArray[day];
+		for (var i = 0; i < tagCounts.length; i++) {
+			if (tagCounts[i])
+				tags[TagList[i]] = tagCounts[i];
+		}
+		return tags;
+	}
 }

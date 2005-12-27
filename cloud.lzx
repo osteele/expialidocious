@@ -1,10 +1,22 @@
 <!--
 Must:
-- bottom dragger
-- right dragger
+- bottom dragger: try smaller non-opaque asset
+- right dragger: after bottom dragger is done
+- variable-height cloud: put it in the html
 - show dates
-- variable-height cloud
-- live feed
+
+Live feed:
+client:
+- login dialog
+- retry for connection refused
+- store in cookie
+- logout
+server:
+- throttling
+
+Publish:
+- http://weblog.infoworld.com/udell/2005/12/20.html#a1357
+- wiki page
 
 Nice:
 - animate in graph
@@ -14,15 +26,23 @@ Nice:
 - check large tags
 - update during animation
 -->
-<canvas proxied="false">
+<canvas proxied="true">
   <script src="analyzer.js"/>
+  <script src="base64.js"/>
   <script src="colors.js"/>
   <splash/>
   
   <dataset name="ds" src="http:data.xml" request="true" ondata="canvas.processTags()"/>
-  <!-- dataset name="ds" src="http://del.icio.us/api/posts/all" request="true" ondata="canvas.processTags()"/-->
+  <!--dataset name="ds" src="http://del.icio.us/api/posts/all" ondata="canvas.processTags()"/-->
   
-  <method name="processTags" args="ds">
+  <script>
+    var account = 'osteele';
+    var password = 'passwd';
+    //ds.setHeader('authorization', 'Basic ' + base64(account + ':' + password));
+    //ds.doRequest();
+  </script>
+  
+  <method name="processTags">
     TagData.processTags(ds.data);
     bars.drawGraph();
     bars.selector.setRange(0, Dates.length);
@@ -89,7 +109,7 @@ Nice:
       selector.setXRange(getMouse('x'), null);
     </method>
     
-    <view name="selector" bgcolor="red" opacity="0.25" height="${parent.height}">
+    <view name="selector" height="${parent.height}">
       <method name="setRange" args="d0, d1"><![CDATA[
         if (d0 < 0) return;
         if (d1 > Dates.length) return;
@@ -107,6 +127,9 @@ Nice:
         var d1 = Math.floor(x1/w);
         this.setRange(d0, d1);
       </method>
+      
+      <view bgcolor="red" opacity="0.25" height="100%" width="100%"/>
+      
       <!-- right dragger -->
       <view width="10" height="20" x="${parent.width}" y="${parent.height/2}" bgcolor="red"
             onmousedown="d.apply()" onmouseup="d.remove()">
@@ -114,16 +137,53 @@ Nice:
           <attribute name="x" value="${parent.setXRange(null, parent.parent.getMouse('x'))}"/>
         </state>
       </view>
+      
       <!-- bottom dragger -->
-      <view y="${parent.height}" width="40"
-            onmousedown="this.sx = parent.x - parent.parent.getMouse('x'); d.apply()"
-            onmouseup="d.remove()"
-            resource="handle.png">
-        <!--view resource="scrolldragdimples.swf"/-->
-        <state name="d">
-          <attribute name="x" value="${parent.setXRange(this.sx+parent.parent.getMouse('x'), null)}"/>
+      <drawview id="bd" width="40" height="10" y="${parent.height}"
+		x="${(parent.parent.width/2-width)/2}"
+		onmousedown="this.sx = parent.x - parent.parent.getMouse('x');
+			     drag.apply()"
+		onmouseup="drag.remove()"
+		opacity="${parent.width==parent.parent.width ? 0.5 : 1.0}">
+	<method event="oninit">
+	  clear(); drawme();
+	</method>
+	<method name="curvy" args="dx,dy">
+	  var rx = 10;
+	  var ry = height/2;
+	  beginPath();
+	  moveTo(dx, dy);
+	  quadraticCurveTo(rx+dx, 0+dy, rx+dx, ry+dy);
+	  quadraticCurveTo(rx+dx, height+dy, rx*2+dx, height+dy);
+	  lineTo(width-rx*2+dx, height+dy);
+	  quadraticCurveTo(width-rx+dx, height+dy, width-rx+dx, height-ry+dy);
+	  quadraticCurveTo(width-rx+dx, 0+dy, width+dx, 0+dy);
+	</method>
+	<method name="drawme">
+	  curvy(0.5,0.5);
+	  closePath();
+	  this.strokeStyle = 0x202020;
+	  stroke();
+	  curvy(0,0);
+	  this.fillStyle = 0xd0d0d0;
+	  fill();
+	  this.fillStyle = 0x000000;
+	  drawBubbles(1);
+	  this.fillStyle = 0xffffff;
+	  drawBubbles(0);
+	</method>
+	<method name="drawBubbles" args="dy"><![CDATA[
+	  beginPath();
+	  for (var x = 13; x <= width-13; x+=3)
+	  for (var y = 1; y < height-3; y+=3)
+	  this.oval(x,y+dy,0.75);
+	  fill();
+	]]></method>
+        <state name="drag">
+          <attribute name="x"
+		     value="${parent.setXRange(this.sx+parent.parent.getMouse('x'), null)}"/>
         </state>
-      </view>
+      </drawview>
     </view>
   </drawview>
   
