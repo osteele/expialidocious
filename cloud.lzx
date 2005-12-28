@@ -1,23 +1,16 @@
 <!--
 Must:
-- fix dragging bottom thumb
 - faster
-- live feed (below)
-
-Live feed:
-client:
-- login dialog
-- retry for connection refused
-- store in cookie
-- logout
-server:
-- throttling
+- test with live feed
 
 Publish:
 - http://weblog.infoworld.com/udell/2005/12/20.html#a1357
 - wiki page
 
 Nice:
+- fix dragging bottom thumb
+- empty clouds
+- login case
 - crossfade login
 - skip rhs of left thumb
 - rank sizes
@@ -31,7 +24,7 @@ Nice:
 - grippers on thumbs
 - deal with empty data
 -->
-<canvas proxied="false" layout="axis: y">
+<canvas proxied="false" layout="axis: y" title="expialidocio.us">
   <!--include href="incubator/tooltip/tooltip.lzx"/-->
   <include href="thumb.lzx"/>
   <script src="analyzer.js"/>
@@ -40,13 +33,24 @@ Nice:
   <splash/>
   
   <dataset name="ds" src="http:data.xml" request="true" ondata="canvas.processTags()"/>
-  <!--dataset name="ds" src="http://localhost/proxy.php" ondata="canvas.processTags()" request="true"/-->
   
   <script>
-    var account = 'osteele';
-    var password = 'passwd';
+    function requestPosts() {
+      if (source == 'local')
+        ds.setSrc('http://localhost/proxy.php');
+      else if (source == 'server') {
+        ds.setSrc('http://expialidocio.us/proxy.php');
+        ds.setSrc('http://osteele.com/cloud/proxy.php');
+      } else if (source) {
+        ds.setSrc('http:tests/' + source + '.xml');
+      }
+      ds.doRequest();
+    }
+    //var account = 'osteele';
+    //var password = 'passwd';
     //ds.setHeader('authorization', 'Basic ' + base64(account + ':' + password));
-    //ds.doRequest();
+    if (_root['source'] == undefined) source = 'posts';
+    requestPosts(source);
   </script>
   
   <method name="processTags"><![CDATA[
@@ -105,7 +109,8 @@ Nice:
         var fontsize = 10+12*s;
         var color = long2css(scaleColor(cloud.bgcolor, 0x0000FF, 0.25+0.75*s));
         var label = '<font size=\"' + fontsize + '" color="' + color + '">' + tagname + ' </font>'
-        var url = 'http://del.icio.us/' + account + '/tags/' + tagname
+	//var url = 'http://del.icio.us/' + account + '/tags/' + tagname
+	var url = 'http://del.icio.us/tags/' + tagname
         str += '<a href=\"' + url + '\" target="_blank">' + label + '</a>'
         // 
       }

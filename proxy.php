@@ -8,6 +8,8 @@
 	 $user = $_SERVER['PHP_AUTH_USER'];
 	 $passwd = $_SERVER['PHP_AUTH_PW'];
 	 if ($user == 'ows') $user = 'osteele';
+	 $user = 'osteele';
+	 $passwd = 'pa55wdde';
 	 //if ($passwd == 'passwd') $passwd = 'pa55wdde';
 	 $url = "http://".$user.":".$passwd."@del.icio.us/api/posts/all";
 	 $file = @fopen($url, "r");

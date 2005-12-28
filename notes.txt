@@ -1,0 +1,9 @@
+Live feed:
+client:
+- login dialog
+- retry for connection refused
+- store in cookie
+- logout
+server:
+- throttling
+
