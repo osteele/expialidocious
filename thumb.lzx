@@ -1,0 +1,32 @@
+<library>
+  <class name="thumb" extends="drawview">
+    <attribute name="side" type="string"/>
+    <attribute name="tooltip" type="string"/>
+    <method event="oninit">
+      drawContour(0.35,0.35);
+      closePath();
+      this.strokeStyle = 0x802020;
+      stroke();
+      drawContour(0,0);
+      this.fillStyle = 0xf08080;
+      fill();
+    </method>
+    <method name="drawContour" args="dx,dy">
+      var tl=0, tr=0, bl=0, br=0;
+      if (side == 'bottom') bl=br=1;
+      if (side == 'left') tl=bl=1;
+      if (side == 'right') tr=br=1;
+      var rx = 10;
+      var ry = 10;
+      beginPath();
+      moveTo(dx+tl*rx, dy); // [0,0]
+      if (tl) quadraticCurveTo(dx, dy, dx, ry+dy);
+      lineTo(dx, height-bl*ry+dy); // [0,1]
+      if (bl) quadraticCurveTo(dx, height+dy, rx+dx, height+dy);
+      lineTo(width-br*rx+dx, height+dy); //[1,1]
+      if (br) quadraticCurveTo(width+dx, height+dy, width+dx, height-ry+dy);
+      lineTo(width+dx, ry*tr+dy); //[1,0]
+      if (tr) quadraticCurveTo(width+dx, 0+dy, width-rx+dx, 0+dy);
+    </method>
+  </class>
+</library>

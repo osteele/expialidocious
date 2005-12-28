@@ -1,9 +1,8 @@
 <!--
 Must:
-- funnel
-- better colors
 - show dates
-- rank sizes
+- better colors
+- skip rhs of left thumb
 - live feed (below)
 
 Live feed:
@@ -20,9 +19,8 @@ Publish:
 - wiki page
 
 Nice:
-- tooltips for cloud
-- skip rhs of left dragger
-- tooltips for buttons
+- rank sizes
+- tooltips
 - animate in graph
 - mouseover graph
 - hover tags
@@ -30,11 +28,11 @@ Nice:
 - check large tags
 - update during animation
 - drag the selector itself
-- funnel
 - grippers on thumbs
 -->
-<canvas proxied="true">
+<canvas proxied="false">
   <include href="incubator/tooltip/tooltip.lzx"/>
+  <include href="thumb.lzx"/>
   <script src="analyzer.js"/>
   <script src="base64.js"/>
   <script src="colors.js"/>
@@ -55,9 +53,11 @@ Nice:
     TagData.processTags(ds.data);
     bars.drawGraph();
     bars.selector.setRange(0, TagData.columns.length);
+    myview.animate('opacity', 1.0, 1000);
     //mylines.drawme();
   </method>
   
+<view id="myview" width="100%" layout="axis: y" opacity="0.1">
   <view id="cloud" width="${parent.width-20}" x="10" height="200" bgcolor="#f0f0ff">
     <attribute name="rangeMin" value="null"/>
     <attribute name="rangeMax" value="null"/>
@@ -65,6 +65,9 @@ Nice:
       if (arguments.length < 1) a = 0;
       if (arguments.length < 2) b = TagData.columns.length;
       if (a == rangeMin && b == rangeMax) return;
+      currentStart.setText(TagData.columnNames[a]);
+      currentEnd.setText(TagData.columnNames[b-1]);
+      //funnel.update();
       this.rangeMin = a;
       this.rangeMax = b;
       var tagCounts = TagData.tagTotals(a, b);
@@ -93,63 +96,54 @@ Nice:
     <text name="tags" multiline="true" width="100%" height="100%"/>
   </view>
   
-  <class name="thumb" extends="drawview">
-    <attribute name="side" type="string"/>
-    <method event="oninit">
-      drawContour(0.5,0.5);
-      closePath();
-      this.strokeStyle = 0x802020;
-      stroke();
-      drawContour(0,0);
-      this.fillStyle = 0xf08080;
+  <drawview id="funnel" width="100%">
+    <text id="currentStart" resize="true" align="left"/>
+    <text id="currentEnd" resize="true" align="right"/>
+    <method name="update" event="onx" reference="bars.selector">
+      var h = 50;
+      clear();
+      beginPath();
+      moveTo(cloud.getAttributeRelative('x', this), 0);
+      lineTo(bars.selector.getAttributeRelative('x', this), h);
+      lineTo(bars.selector.getAttributeRelative('x', this)+bars.selector.getAttributeRelative('width', this)-10, h);
+      lineTo(cloud.getAttributeRelative('x', this)+cloud.getAttributeRelative('width', this), 0);
+      this.fillStyle = cloud.bgcolor;
       fill();
     </method>
-    <method name="drawContour" args="dx,dy">
-      var tl=0, tr=0, bl=0, br=0;
-      if (side == 'bottom') bl=br=1;
-      if (side == 'left') tl=bl=1;
-      if (side == 'right') tr=br=1;
-      var rx = 10;
-      var ry = height/2;
-      beginPath();
-      moveTo(dx+tl*rx, dy);
-      if (tl) quadraticCurveTo(dx, dy, dx, ry+dy);
-      moveTo(dx, height-bl*ry+dy);
-      if (bl) quadraticCurveTo(dx, height+dy, rx+dx, height+dy);
-      lineTo(width-br*rx+dx, height+dy);
-      if (br) quadraticCurveTo(width+dx, height+dy, width+dx, ry+dy);
-      lineTo(width+dx, ry*tr+dy);
-      if (tr) quadraticCurveTo(width+dx, 0+dy, width-rx+dx, 0+dy);
-      lineTo(dx+tl*rx, dy);
+    <method event="onwidth" reference="bars.selector">
+      update();
     </method>
-  </class>
+  </drawview>
   
   <drawview id="bars"
-            y="210" x="10" width="${parent.width-20}" height="100"
+            y="210" x="25%" width="50%" height="100"
             bgcolor="#f0f0ff">
     <method name="drawGraph"><![CDATA[
       var sums = TagData.dateSums();
       var w = this.step = width/sums.length;
       var max = 0;
-      for (var i = 0; i < sums.length; i++) {
+      for (var i = 0; i < sums.length; i++)
         if (sums[i] > max) max = sums[i];
-      }
       beginPath();
+      this.moveTo(0,100);
       for (var i = 0; i < sums.length; i++) {
         var x = i*w;
         var y = height - sums[i]*height/max;
-        if (i == 0) {moveTo(x, y)}
+        if (y > 100) Debug.write(sums[i], max, sums[i]*height/max);
+        //if (i == 0) {moveTo(x, y)}
         lineTo(x,y);
         lineTo(x+w,y);
       }
-      this.strokeStyle = 0x8080ff;
-      this.stroke();
+      this.moveTo(width,100);
+      this.fillStyle = this.strokeStyle = 0x8080ff;
+      this.fill();
+      //this.stroke();
       selector.setRange(0, sums.length);
     ]]></method>
     
-    <method event="onclick">
+    <!--method event="onclick">
       selector.setXRange(getMouse('x'), null);
-    </method>
+    </method-->
     
     <view name="selector" height="100%">
       <method name="setRange" args="d0, d1"><![CDATA[
@@ -186,11 +180,11 @@ Nice:
       
       <!-- masks -->
       <view x="${-parent.x}" width="${parent.x}" height="100%"
-            bgcolor="gray" opacity="0.40"/>
+            bgcolor="white" opacity="0.80"/>
       <view x="${parent.width}"
             width="${parent.parent.width-parent.x-parent.width}"
             height="100%"
-            bgcolor="gray" opacity="0.40"/>
+            bgcolor="white" opacity="0.80"/>
       
       <!-- left dragger -->
       <thumb x="-10" width="10" height="20"
@@ -219,8 +213,8 @@ Nice:
                           drag.apply()"
              onmouseup="drag.remove()"
              side="bottom"
-             opacity="${parent.width==parent.parent.width ? 0.25 : 1.0}">
-        <tooltip name="tip">Drag this to select a different range of dates.</tooltip>
+             opacity="${parent.width==parent.parent.width ? 0.25 : 1.0}"
+             tooltip="Drag to select a different range of dates">
         <state name="drag">
           <attribute name="x"
 		     value="${parent.setXRange(this.sx+parent.parent.getMouse('x'), null)}"/>
@@ -228,6 +222,7 @@ Nice:
       </thumb>
     </view>
   </drawview>
+</view>
   
   <debug x="610"/>
 </canvas>
