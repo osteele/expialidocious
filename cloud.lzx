@@ -1,9 +1,9 @@
 <!--
 Must:
-- show dates
-- better colors
-- skip rhs of left thumb
+- fix dragging bottom thumb
 - live feed (below)
+- copyright
+- faster
 
 Live feed:
 client:
@@ -19,18 +19,20 @@ Publish:
 - wiki page
 
 Nice:
+- crossfade login
+- skip rhs of left thumb
 - rank sizes
 - tooltips
 - animate in graph
 - mouseover graph
 - hover tags
-- clickable tags
 - check large tags
 - update during animation
 - drag the selector itself
 - grippers on thumbs
+- deal with empty data
 -->
-<canvas proxied="false">
+<canvas proxied="false" layout="axis: y">
   <include href="incubator/tooltip/tooltip.lzx"/>
   <include href="thumb.lzx"/>
   <script src="analyzer.js"/>
@@ -52,10 +54,14 @@ Nice:
     TagData = new DataFrame;
     TagData.processTags(ds.data);
     bars.drawGraph();
+    allStart.setText(TagData.columnNames[0]);
+    allEnd.setText(TagData.columnNames[TagData.columnNames.length - 1]);
     bars.selector.setRange(0, TagData.columns.length);
     myview.animate('opacity', 1.0, 1000);
-    //mylines.drawme();
   </method>
+  
+  <class name="dateLabel" extends="text" resize="true"
+         fontsize="24" fgcolor="#60ff60"/>
   
 <view id="myview" width="100%" layout="axis: y" opacity="0.1">
   <view id="cloud" width="${parent.width-20}" x="10" height="200" bgcolor="#f0f0ff">
@@ -67,7 +73,6 @@ Nice:
       if (a == rangeMin && b == rangeMax) return;
       currentStart.setText(TagData.columnNames[a]);
       currentEnd.setText(TagData.columnNames[b-1]);
-      //funnel.update();
       this.rangeMin = a;
       this.rangeMax = b;
       var tagCounts = TagData.tagTotals(a, b);
@@ -89,25 +94,41 @@ Nice:
         var c = Math.floor(255*(1-1.0*s));
         var fontsize = 10+12*s;
         var color = long2css(scaleColor(cloud.bgcolor, 0x0000FF, 0.25+0.75*s));
-        str += '<font size=\"' + fontsize + '" color="' + color + '">' + tagname + ' </font>'
+        var label = '<font size=\"' + fontsize + '" color="' + color + '">' + tagname + ' </font>'
+        var url = 'http://del.icio.us/' + account + '/tags/' + tagname
+        str += '<a href=\"' + url + '\" target="_blank">' + label + '</a>'
+        // 
       }
       tags.setText(str);
     ]]></method>
     <text name="tags" multiline="true" width="100%" height="100%"/>
   </view>
   
-  <drawview id="funnel" width="100%">
-    <text id="currentStart" resize="true" align="left"/>
-    <text id="currentEnd" resize="true" align="right"/>
+  <drawview id="funnel" x="${cloud.x}" width="${cloud.width}" height="50">
+    <dateLabel id="currentStart" align="left" valign="bottom"/>
+    <dateLabel id="currentEnd" align="right" valign="bottom"/>
     <method name="update" event="onx" reference="bars.selector">
       var h = 50;
+      var r = 20;
+      var x0 = cloud.getAttributeRelative('x', this)-10;
+      var x1 = bars.selector.getAttributeRelative('x', this)-10;
+      var x2 = x1+bars.selector.getAttributeRelative('width', this);
+      var x3 = x0+cloud.getAttributeRelative('width', this);
       clear();
       beginPath();
-      moveTo(cloud.getAttributeRelative('x', this), 0);
-      lineTo(bars.selector.getAttributeRelative('x', this), h);
-      lineTo(bars.selector.getAttributeRelative('x', this)+bars.selector.getAttributeRelative('width', this)-10, h);
-      lineTo(cloud.getAttributeRelative('x', this)+cloud.getAttributeRelative('width', this), 0);
+      moveTo(x0, 0);
+      quadraticCurveTo(x0, r, x0+r, r)
+      lineTo(x1-r, h-r);
+      quadraticCurveTo(x1, h-r, x1, h);
+      lineTo(x2, h);
+      quadraticCurveTo(x2, h-r, x2+r, h-r);
+      lineTo(x3-r, r);
+      quadraticCurveTo(x3, r, x3, 0);
       this.fillStyle = cloud.bgcolor;
+      var g = this.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, cloud.bgcolor);
+      g.addColorStop(1, bars.bgcolor);
+      this.fillStyle = g;
       fill();
     </method>
     <method event="onwidth" reference="bars.selector">
@@ -117,7 +138,7 @@ Nice:
   
   <drawview id="bars"
             y="210" x="25%" width="50%" height="100"
-            bgcolor="#f0f0ff">
+            bgcolor="#d0d0ff">
     <method name="drawGraph"><![CDATA[
       var sums = TagData.dateSums();
       var w = this.step = width/sums.length;
@@ -129,15 +150,12 @@ Nice:
       for (var i = 0; i < sums.length; i++) {
         var x = i*w;
         var y = height - sums[i]*height/max;
-        if (y > 100) Debug.write(sums[i], max, sums[i]*height/max);
-        //if (i == 0) {moveTo(x, y)}
         lineTo(x,y);
         lineTo(x+w,y);
       }
-      this.moveTo(width,100);
+      this.lineTo(width,100);
       this.fillStyle = this.strokeStyle = 0x8080ff;
       this.fill();
-      //this.stroke();
       selector.setRange(0, sums.length);
     ]]></method>
     
@@ -164,20 +182,6 @@ Nice:
         this.setRange(d0, d1);
       </method>
       
-      <!--view bgcolor="red" opacity="0.25" height="100%" width="100%"/-->
-      <!--view bgcolor="white" opacity="0.25" height="80%" width="40%" x="40%" y="10%"/-->
-      
-      <!--drawview width="100%" height="20" y="-20">
-        <method event="onx">f()</method>
-        <method event="onx">f()</method>
-        <method name="f" event="oninit">
-          beginPath();
-          moveTo(0, height);
-          lineTo(-parent.x, 0);
-          stroke();
-        </method>
-      </drawview-->
-      
       <!-- masks -->
       <view x="${-parent.x}" width="${parent.x}" height="100%"
             bgcolor="white" opacity="0.80"/>
@@ -186,7 +190,7 @@ Nice:
             height="100%"
             bgcolor="white" opacity="0.80"/>
       
-      <!-- left dragger -->
+      <!-- left thumb -->
       <thumb x="-10" width="10" height="20"
              valign="middle" side="left"
              onmousedown="this.x1 = parent.x+parent.width;
@@ -197,7 +201,7 @@ Nice:
         </state>
       </thumb>
       
-      <!-- right dragger -->
+      <!-- right thumb -->
       <thumb width="10" height="20" x="${parent.width}"
              valign="middle" side="right"
              onmousedown="drag.apply()" onmouseup="drag.remove()">
@@ -206,14 +210,14 @@ Nice:
         </state>
       </thumb>
       
-      <!-- bottom dragger -->
+      <!-- bottom thumb -->
       <thumb id="bd" width="40" height="10" y="${parent.height}"
              align="center"
              onmousedown="this.sx = parent.x - parent.parent.getMouse('x');
                           drag.apply()"
              onmouseup="drag.remove()"
              side="bottom"
-             opacity="${parent.width==parent.parent.width ? 0.25 : 1.0}"
+             opacity="${parent.width==parent.parent.width ? 0.25 : 0.8}"
              tooltip="Drag to select a different range of dates">
         <state name="drag">
           <attribute name="x"
@@ -222,7 +226,14 @@ Nice:
       </thumb>
     </view>
   </drawview>
-</view>
   
+  <view x="${bars.x}" width="${bars.width}">
+    <dateLabel id="allStart" align="left"/>
+    <dateLabel id="allEnd" align="right"/>
+  </view>
+</view>
+
+<text align="left" fgcolor="red" fontsize="48">expialidocio.us</text>
+
   <debug x="610"/>
 </canvas>

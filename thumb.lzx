@@ -1,14 +1,16 @@
 <library>
-  <class name="thumb" extends="drawview">
+  <class name="thumb" extends="drawview" opacity="0.8">
     <attribute name="side" type="string"/>
     <attribute name="tooltip" type="string"/>
     <method event="oninit">
       drawContour(0.35,0.35);
       closePath();
-      this.strokeStyle = 0x802020;
+      this.strokeStyle = 0xff2020;
+      //this.strokeStyle = 0x2020ff;
       stroke();
       drawContour(0,0);
-      this.fillStyle = 0xf08080;
+      this.fillStyle = 0xff8080;
+      //this.fillStyle = 0x8080ff;
       fill();
     </method>
     <method name="drawContour" args="dx,dy">
