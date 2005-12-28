@@ -1,6 +1,3 @@
-SortedTags = [];
-TagSortInverse = [];
-
 var DataFrame = function() {
   this.rowNames = [];
   this.columnNames = [];
@@ -38,16 +35,6 @@ DataFrame.prototype = {
       }
     }
     this.max = max; // not used
-    
-    SortedTags = [].concat(this.rowNames);
-    SortedTags.sort();
-    TagSortInverse = [];
-    for (var i = 0; i < SortedTags.length; i++) {
-      var tagname = SortedTags[i];
-      var j = 0;
-      while (this.rowNames[j] != tagname) j++;
-      TagSortInverse.push(j);
-    }
   },
   
   tagTotals: function (a, b) {

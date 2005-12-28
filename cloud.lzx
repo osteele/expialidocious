@@ -1,9 +1,8 @@
 <!--
 Must:
 - fix dragging bottom thumb
-- live feed (below)
-- copyright
 - faster
+- live feed (below)
 
 Live feed:
 client:
@@ -33,7 +32,7 @@ Nice:
 - deal with empty data
 -->
 <canvas proxied="false" layout="axis: y">
-  <include href="incubator/tooltip/tooltip.lzx"/>
+  <!--include href="incubator/tooltip/tooltip.lzx"/-->
   <include href="thumb.lzx"/>
   <script src="analyzer.js"/>
   <script src="base64.js"/>
@@ -41,7 +40,7 @@ Nice:
   <splash/>
   
   <dataset name="ds" src="http:data.xml" request="true" ondata="canvas.processTags()"/>
-  <!--dataset name="ds" src="http://del.icio.us/api/posts/all" ondata="canvas.processTags()"/-->
+  <!--dataset name="ds" src="http://localhost/proxy.php" ondata="canvas.processTags()" request="true"/-->
   
   <script>
     var account = 'osteele';
@@ -50,15 +49,26 @@ Nice:
     //ds.doRequest();
   </script>
   
-  <method name="processTags">
+  <method name="processTags"><![CDATA[
     TagData = new DataFrame;
     TagData.processTags(ds.data);
+    
+    SortedTags = [].concat(TagData.rowNames);
+    SortedTags.sort();
+    TagSortInverse = [];
+    for (var i = 0; i < SortedTags.length; i++) {
+      var tagname = SortedTags[i];
+      var j = 0;
+      while (TagData.rowNames[j] != tagname) j++;
+      TagSortInverse.push(j);
+    }
+    
     bars.drawGraph();
     allStart.setText(TagData.columnNames[0]);
     allEnd.setText(TagData.columnNames[TagData.columnNames.length - 1]);
     bars.selector.setRange(0, TagData.columns.length);
     myview.animate('opacity', 1.0, 1000);
-  </method>
+  ]]></method>
   
   <class name="dateLabel" extends="text" resize="true"
          fontsize="24" fgcolor="#60ff60"/>
@@ -233,7 +243,8 @@ Nice:
   </view>
 </view>
 
-<text align="left" fgcolor="red" fontsize="48">expialidocio.us</text>
+<text align="left" fgcolor="#dd0000" fontsize="48">expialidocio.us</text>
 
+<text>Copyright 2005 by <a href="http://osteele.com">Oliver Steele</a>.  All rights reserved.</text>
   <debug x="610"/>
 </canvas>
