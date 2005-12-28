@@ -1,28 +1,33 @@
 <!--
 Must:
-- faster
 - test with live feed
 
 Publish:
 - http://weblog.infoworld.com/udell/2005/12/20.html#a1357
 - wiki page
 
-Nice:
-- fix dragging bottom thumb
-- empty clouds
-- login case
-- crossfade login
-- skip rhs of left thumb
-- rank sizes
-- tooltips
-- animate in graph
-- mouseover graph
-- hover tags
+Corners:
+- empty data
+- bad login
 - check large tags
+- verify old selector against new
+
+Features:
+- number of posts
+- tooltips
+- hover tags
+- show empty days
+
+Tuning:
+- fix dragging bottom thumb
+- rank sizes
 - update during animation
 - drag the selector itself
+
+Visuals:
+- skip rhs of left thumb
 - grippers on thumbs
-- deal with empty data
+- mouseover graph
 -->
 <canvas proxied="false" layout="axis: y" title="expialidocio.us">
   <!--include href="incubator/tooltip/tooltip.lzx"/-->
@@ -32,7 +37,7 @@ Nice:
   <script src="colors.js"/>
   <splash/>
   
-  <dataset name="ds" src="http:data.xml" request="true" ondata="canvas.processTags()"/>
+  <dataset name="ds" src="http:data.xml" ondata="canvas.processTags()"/>
   
   <script>
     function requestPosts() {
@@ -55,7 +60,12 @@ Nice:
   
   <method name="processTags"><![CDATA[
     TagData = new DataFrame;
+    if (!ds.data.childNodes.length)
+      return credits.setAttribute('state', 'empty');
+    credits.setAttribute('state', 'running');
+    
     TagData.processTags(ds.data);
+    UserName = ds.data.attributes['user'];
     
     SortedTags = [].concat(TagData.rowNames);
     SortedTags.sort();
@@ -70,8 +80,10 @@ Nice:
     bars.drawGraph();
     allStart.setText(TagData.columnNames[0]);
     allEnd.setText(TagData.columnNames[TagData.columnNames.length - 1]);
-    bars.selector.setRange(0, TagData.columns.length);
+    var cn = Math.floor(TagData.columns.length/3);
+    bars.selector.setRange(cn, TagData.columns.length-cn);
     myview.animate('opacity', 1.0, 1000);
+    credits.animate('y', myview.y+myview.height, 1000);
   ]]></method>
   
   <class name="dateLabel" extends="text" resize="true"
@@ -89,7 +101,7 @@ Nice:
       currentEnd.setText(TagData.columnNames[b-1]);
       this.rangeMin = a;
       this.rangeMax = b;
-      var tagCounts = TagData.tagTotals(a, b);
+      var tagCounts = TagData.columnRangeSum(a, b);
       
       var max = 0;
       var min = 100;
@@ -109,10 +121,8 @@ Nice:
         var fontsize = 10+12*s;
         var color = long2css(scaleColor(cloud.bgcolor, 0x0000FF, 0.25+0.75*s));
         var label = '<font size=\"' + fontsize + '" color="' + color + '">' + tagname + ' </font>'
-	//var url = 'http://del.icio.us/' + account + '/tags/' + tagname
-	var url = 'http://del.icio.us/tags/' + tagname
+	var url = 'http://del.icio.us/' + UserName + '/tags/' + tagname
         str += '<a href=\"' + url + '\" target="_blank">' + label + '</a>'
-        // 
       }
       tags.setText(str);
     ]]></method>
@@ -155,7 +165,7 @@ Nice:
             y="210" x="25%" width="50%" height="100"
             bgcolor="#d0d0ff">
     <method name="drawGraph"><![CDATA[
-      var sums = TagData.dateSums();
+      var sums = TagData.getColumnSums();
       var w = this.step = width/sums.length;
       var max = 0;
       for (var i = 0; i < sums.length; i++)
@@ -199,11 +209,11 @@ Nice:
       
       <!-- masks -->
       <view x="${-parent.x}" width="${parent.x}" height="100%"
-            bgcolor="white" opacity="0.80"/>
+            bgcolor="white" opacity="0.60"/>
       <view x="${parent.width}"
             width="${parent.parent.width-parent.x-parent.width}"
             height="100%"
-            bgcolor="white" opacity="0.80"/>
+            bgcolor="white" opacity="0.60"/>
       
       <!-- left thumb -->
       <thumb x="-10" width="10" height="20"
@@ -243,13 +253,23 @@ Nice:
   </drawview>
   
   <view x="${bars.x}" width="${bars.width}">
-    <dateLabel id="allStart" align="left"/>
-    <dateLabel id="allEnd" align="right"/>
+    <dateLabel id="allStart" fontsize="18" align="left"/>
+    <dateLabel id="allEnd" fontsize="18" align="right"/>
   </view>
 </view>
 
-<text align="left" fgcolor="#dd0000" fontsize="48">expialidocio.us</text>
+<view id="alternateText" options="ignorelayout" x="25%" width="50%" y="${credits.height}" fontsize="24">
+<text visible="${credits.state=='initial'}" width="100%" options="ignorelayout" align="center" valign="middle" multiline="true">This page will display an interactive summary of your <a href="http://del.icio.us" target="_blank"><u><font color="#0000ff">de.licio.us activity</font></u></a>.  In order to retrieve this information, your browser will ask you for your de.licio.us name and password.  This information is only stored in your browser.</text>
 
-<text>Copyright 2005 by <a href="http://osteele.com">Oliver Steele</a>.  All rights reserved.</text>
-  <debug x="610"/>
+<text visible="${credits.state=='empty'}" width="100%" options="ignorelayout" align="center" valign="middle" multiline="true">You haven't tagged any pages in <a href="http://del.icio.us"><u><font color="#0000ff">de.licio.us</font></u></a>.  Tag some pages, and then come back here.  Bye!</text>
+</view>
+
+<view id="credits" options="ignorelayout" layout="axis: y">
+<attribute name="state" type="string" value="initial"/>
+<text id="logo" fgcolor="#ff4040" fontsize="48">expialidocio.us</text>
+<text visible="${credits.state=='running'}" multiline="true" width="${logo.width}" fgcolor="#444">The bar chart displays the number of posts you've tagged, for each day that you've tagged any posts at all.  The tag cloud contains tags for the selected range of dates.  Drag the red slider to move the date range; drag the side handles to extend it.  Click on a tag name to visit your de.licio.us page for that tag.</text>
+<text fgcolor="#222"><i>Copyright 2005 by <a href="http://osteele.com"><u><font color="#0000ff">Oliver Steele</font></u></a>.  All rights reserved.</i></text>
+</view>
+
+<debug/>
 </canvas>

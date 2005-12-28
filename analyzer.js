@@ -2,6 +2,7 @@ var DataFrame = function() {
   this.rowNames = [];
   this.columnNames = [];
   this.columns = [];
+  this.columnSumCache = {};
 };
 
 DataFrame.prototype = {
@@ -10,14 +11,14 @@ DataFrame.prototype = {
     var count = 0;
     var max = 0;
     var dateMap = {}; // {Date -> [tagIndex => count]}
-    var tagMap = {}
+    var tagMap = {};
     for (var i in posts) {
       var post = posts[i];
       var date = post.attributes['time'].split('T')[0];
       var tags = post.attributes['tag'].split(' ');
-      var di = DateMap[date];
+      var di = dateMap[date];
       if (!(di >= 0)) {
-        DateMap[date] = di = this.columnNames.length;
+        dateMap[date] = di = this.columnNames.length;
         this.columnNames.push(date);
         this.columns.push([]);
       }
@@ -37,20 +38,54 @@ DataFrame.prototype = {
     this.max = max; // not used
   },
   
-  tagTotals: function (a, b) {
-    var tagCounts = [];
+  addColumns_iterate: function (a, b) {
+    var sum = [];
     for (var i = a; i < b; i++) {
       var column = this.columns[i];
       for (var t = 0; t < column.length; t++) {
-        while (t >= tagCounts.length) tagCounts.push(0);
-        tagCounts[t] += column[t];
+        while (t >= sum.length) sum.push(0);
+        sum[t] += column[t];
       }
     }
-    while (tagCounts.length < this.rowNames.length) tagCounts.push(0);
-    return tagCounts;
+    while (sum.length < this.rowNames.length) sum.push(0);
+    return sum;
   },
   
-  dateSums: function () {
+  addColumns_choose: function (a, b, left, right) {
+    if (b - a < 4) return this.addColumns_iterate(a, b);
+	//if (b-a==1) return this.columns[a];
+	var middle = Math.floor((left + right)/2);
+	var s0 = a < middle && this.addColumns_subdivide(a, Math.min(b, middle-1), left, middle);
+	var s1 = middle <= b && this.addColumns_subdivide(Math.max(a, middle), b, middle, right);
+	if (!s0 || !s1) return s0 || s1;
+	var sum = [];
+	for (var i = 0; i < s0.length; i++)
+	  sum.push(s0[i]+s1[i]);
+	return sum;
+  },
+  
+  addColumns_subdivide: function (a, b, left, right) {
+	if (arguments.length <= 2) {
+	  left = 0;
+	  right = this.columns.length;
+	}
+	var cache = this.columnSumCache;
+	var key = a == left && b == right-1 && [a,b];
+	if (key && cache[key]) return cache[key];
+	if (a==b) return null;
+	var sum = this.addColumns_choose(a, b, left, right);
+	if (key) cache[key] = sum;
+	return sum;
+  },
+
+  columnRangeSum: function(a, b) {
+	//var t0 = (new Date).getTime();
+	sum = this.addColumns_subdivide(a, b);
+	//Debug.write((new Date).getTime()-t0);
+	return sum;
+  },
+  
+  getColumnSums: function () {
     var sums = [];
     for (var i = 0; i < this.columns.length; i++) {
       var column = this.columns[i];
@@ -61,15 +96,5 @@ DataFrame.prototype = {
       sums.push(sum);
     }
     return sums;
-  },
-  
-  tagsForDate: function (day) {
-		var tags = {};
-		var tagCounts = this.columns[day];
-		for (var i = 0; i < tagCounts.length; i++) {
-			if (tagCounts[i])
-				tags[this.rowNames[i]] = tagCounts[i];
-		}
-		return tags;
-	}
+  }
 }
