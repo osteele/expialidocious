@@ -17,6 +17,7 @@ Features:
 - tooltips
 - hover tags
 - show empty days
+- show number of posts, tags
 
 Tuning:
 - fix dragging bottom thumb
@@ -29,11 +30,11 @@ Visuals:
 - grippers on thumbs
 - mouseover graph
 -->
-<canvas proxied="false" layout="axis: y" title="expialidocio.us">
+<canvas proxied="false" title="expialidocio.us">
   <!--include href="incubator/tooltip/tooltip.lzx"/-->
   <include href="thumb.lzx"/>
   <script src="analyzer.js"/>
-  <script src="base64.js"/>
+  <!--script src="base64.js"/-->
   <script src="colors.js"/>
   <splash/>
   
@@ -60,7 +61,7 @@ Visuals:
   
   <method name="processTags"><![CDATA[
     TagData = new DataFrame;
-    if (!ds.data.childNodes.length)
+    if (!(ds.data.childNodes||[]).length)
       return credits.setAttribute('state', 'empty');
     credits.setAttribute('state', 'running');
     
@@ -83,7 +84,7 @@ Visuals:
     var cn = Math.floor(TagData.columns.length/3);
     bars.selector.setRange(cn, TagData.columns.length-cn);
     myview.animate('opacity', 1.0, 1000);
-    credits.animate('y', myview.y+myview.height, 1000);
+    credits.animate('y', myview.y+myview.height+40, 0);
   ]]></method>
   
   <class name="dateLabel" extends="text" resize="true"
@@ -165,7 +166,7 @@ Visuals:
             y="210" x="25%" width="50%" height="100"
             bgcolor="#d0d0ff">
     <method name="drawGraph"><![CDATA[
-      var sums = TagData.getColumnSums();
+      var sums = DatePosts;//TagData.getColumnSums();
       var w = this.step = width/sums.length;
       var max = 0;
       for (var i = 0; i < sums.length; i++)
@@ -179,7 +180,7 @@ Visuals:
         lineTo(x+w,y);
       }
       this.lineTo(width,100);
-      this.fillStyle = this.strokeStyle = 0x8080ff;
+      this.fillStyle = this.strokeStyle = 0x4040ff;
       this.fill();
       selector.setRange(0, sums.length);
     ]]></method>
@@ -258,13 +259,13 @@ Visuals:
   </view>
 </view>
 
-<view id="alternateText" options="ignorelayout" x="25%" width="50%" y="${credits.height}" fontsize="24">
-<text visible="${credits.state=='initial'}" width="100%" options="ignorelayout" align="center" valign="middle" multiline="true">This page will display an interactive summary of your <a href="http://del.icio.us" target="_blank"><u><font color="#0000ff">de.licio.us activity</font></u></a>.  In order to retrieve this information, your browser will ask you for your de.licio.us name and password.  This information is only stored in your browser.</text>
+<view x="25%" width="50%" y="${credits.height}" fontsize="24">
+<text visible="${credits.state=='initial'}" width="100%" align="center" valign="middle" multiline="true">This page will display an interactive summary of your <a href="http://del.icio.us" target="_blank"><u><font color="#0000ff">de.licio.us activity</font></u></a>.  In order to retrieve this information, your browser will ask you for your de.licio.us name and password.  This information is only stored in your browser.</text>
 
-<text visible="${credits.state=='empty'}" width="100%" options="ignorelayout" align="center" valign="middle" multiline="true">You haven't tagged any pages in <a href="http://del.icio.us"><u><font color="#0000ff">de.licio.us</font></u></a>.  Tag some pages, and then come back here.  Bye!</text>
+<text visible="${credits.state=='empty'}" width="100%" align="center" valign="middle" multiline="true"><a href="http://del.icio.us"><u><font color="#0000ff">de.licio.us</font></u></a> doesn't show any posts tagged with your account.  This could be because you haven't tagged any pages, in which case you should tag some and then come back here.  Or it could be because the del.icio.us server is responding null.</text>
 </view>
 
-<view id="credits" options="ignorelayout" layout="axis: y">
+<view id="credits" layout="axis: y">
 <attribute name="state" type="string" value="initial"/>
 <text id="logo" fgcolor="#ff4040" fontsize="48">expialidocio.us</text>
 <text visible="${credits.state=='running'}" multiline="true" width="${logo.width}" fgcolor="#444">The bar chart displays the number of posts you've tagged, for each day that you've tagged any posts at all.  The tag cloud contains tags for the selected range of dates.  Drag the red slider to move the date range; drag the side handles to extend it.  Click on a tag name to visit your de.licio.us page for that tag.</text>

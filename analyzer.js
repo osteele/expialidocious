@@ -5,6 +5,8 @@ var DataFrame = function() {
   this.columnSumCache = {};
 };
 
+var DatePosts = [];
+
 DataFrame.prototype = {
   processTags: function(data) {
     var posts = data.childNodes;
@@ -21,7 +23,9 @@ DataFrame.prototype = {
         dateMap[date] = di = this.columnNames.length;
         this.columnNames.push(date);
         this.columns.push([]);
+		DatePosts.push(0);
       }
+	  DatePosts[di]++;
       var counts = this.columns[di];
       for (var j in tags) {
         var tag = tags[j];
