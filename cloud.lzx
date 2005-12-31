@@ -1,7 +1,4 @@
 <!--
-Must:
-- test with live feed
-
 Publish:
 - http://weblog.infoworld.com/udell/2005/12/20.html#a1357
 - wiki page
@@ -42,19 +39,19 @@ Visuals:
   
   <script>
     function requestPosts() {
-      if (source == 'local')
-        ds.setSrc('http://localhost/proxy.php');
-      else if (source == 'server') {
-        ds.setSrc('http://expialidocio.us/proxy.php');
-        ds.setSrc('http://osteele.com/cloud/proxy.php');
+      if (source == 'staging')
+        url = 'http://localhost/proxy.php';
+      else if (source == 'proxy') {
+        url = 'http:proxy.php';
       } else if (source) {
-        ds.setSrc('http:tests/' + source + '.xml');
+        url = 'http:tests/' + source + '.xml';
       }
+      Debug.write(url);
+      ds.setSrc(url);
+      //credits.setAttribute('state', 'retrieving');
       ds.doRequest();
     }
-    //var account = 'osteele';
-    //var password = 'passwd';
-    //ds.setHeader('authorization', 'Basic ' + base64(account + ':' + password));
+    //ds.setHeader('authorization', 'Basic ' + base64(account+':'+password));
     if (_root['source'] == undefined) source = 'posts';
     requestPosts(source);
   </script>
@@ -260,7 +257,10 @@ Visuals:
 </view>
 
 <view x="25%" width="50%" y="${credits.height}" fontsize="24">
+
 <text visible="${credits.state=='initial'}" width="100%" align="center" valign="middle" multiline="true">This page will display an interactive summary of your <a href="http://del.icio.us" target="_blank"><u><font color="#0000ff">de.licio.us activity</font></u></a>.  In order to retrieve this information, your browser will ask you for your de.licio.us name and password.  This information is only stored in your browser.</text>
+
+<text visible="${credits.state=='retrieving'}" width="100%" align="center" valign="middle" multiline="true">Retrieving data...</text>
 
 <text visible="${credits.state=='empty'}" width="100%" align="center" valign="middle" multiline="true"><a href="http://del.icio.us"><u><font color="#0000ff">de.licio.us</font></u></a> doesn't show any posts tagged with your account.  This could be because you haven't tagged any pages, in which case you should tag some and then come back here.  Or it could be because the del.icio.us server is responding null.</text>
 </view>

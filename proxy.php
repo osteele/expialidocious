@@ -1,30 +1,52 @@
 <?php
+  //die('user='.$_SERVER['PHP_AUTH_USER']);
  if (!isset($_SERVER['PHP_AUTH_USER'])) {
-   header('WWW-Authenticate: Basic realm="My Realm"');
-   header('HTTP/1.0 401 Unauthorized');
-   echo 'Text to send if user hits Cancel button';
-   exit;
+	 header('WWW-Authenticate: Basic realm="del.iciou.us account info"');
+	 header('HTTP/1.0 401 Unauthorized');
+	 echo '<cancel/>';
+	 exit;
  } else {
+	 $timefile='time.txt';
+	 $lockfile='lock.txt';
+	 clearstatcache();
+	 
+	 $fp=fopen($lockfile,'w');
+	 flock($fp, LOCK_EX);
+	 $fm = filemtime($timefile);
+	 $next_access_time = $fm + 1;
+	 $delay = $next_access_time - time();
+	 //if ($delay > 0) sleep($delay);
+	 
+	 $fp2 = fopen($timefile, 'w');	 
+	 fwrite($fp2, "$next_access_time\n");
+	 fclose($fp2);
+	 
+	 flock($fp, LOCK_UN);
+	 fclose($fp);
+	 
 	 $user = $_SERVER['PHP_AUTH_USER'];
 	 $passwd = $_SERVER['PHP_AUTH_PW'];
-	 if ($user == 'ows') $user = 'osteele';
-	 $user = 'osteele';
-	 $passwd = 'pa55wdde';
-	 //if ($passwd == 'passwd') $passwd = 'pa55wdde';
-	 $url = "http://".$user.":".$passwd."@del.icio.us/api/posts/all";
-	 $file = @fopen($url, "r");
-	 //$file = fsockopen("www.example.com", 80, $errno, $errstr, 30);
-	 //die('err '.$errno.', '.$errstr);
+	 //$url = "http://".$user.":".$passwd."@del.icio.us/api/posts/all";
+	 $url = "http://del.icio.us/api/posts/all";
+	 
+	 $ch = curl_init($url);
+	 curl_setopt($ch, CURLOPT_USERAGENT, 'expialidocio.us');
+	 curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$passwd);
+	 curl_exec($ch);
+	 curl_close($ch);
+	 exit;
+	 //curl_errno and curl_error
+ // int: CURLOPT_CONNECTTIMEOUT CURLOPT_HTTPAUTH=CURLAUTH_BASIC CURLOPT_MAXREDIRS
+ // bool: CURLOPT_FAILONERROR CURLOPT_FOLLOWLOCATION CURLOPT_HEADER CURLOPT_RETURNTRANSFER
+ // string: CURLOPT_REFERER
+	// array: CURLOPT_HTTPHEADER
+ //_error
+ //_setopt
+
 	 if (!$file) {
-		 die('no file');
+		 header('WWW-Authenticate: Basic realm="My Realm"');
+		 header('HTTP/1.0 401 Unauthorized');
+		 echo "del.icio.us didn't like that username and password.";
 	 }
-	 //die($http_response_header);
-	 header("Content-type: application/xml");
-	 while (!feof($file)) {
-		 $line = fgets($file, 1024);
-		 echo $line;
-	 }
-	 fclose($file);
  }
-// $http_response_header or stream_get_meta_data()
 ?>
