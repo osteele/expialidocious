@@ -1,11 +1,39 @@
-Live feed:
-client:
-- login dialog
-- retry for connection refused
-- store in cookie
-- logout
-server:
-- throttling
+Publish:
+- heads up to delicious
+- make movie, publish 
+- http://weblog.infoworld.com/udell/2005/12/20.html#a1357
+- wiki page
+
+Corners:
+- check large tags
+- verify old selector against new
+
+Features:
+- store login in cookie
+- show number of posts
+- tooltips
+- hover tags
+- show empty days
+- show number of posts, tags
+- link to everyone's or just mine
+- mouseover graph
+
+Tuning:
+- fix dragging bottom thumb
+- rank sizes
+- update during animation
+- drag the selector itself
+
+Visuals:
+- animation while retrieving data
+- flash the button on enter
+- show dimmed login while data is coming in
+- skip rhs of left thumb
+- grippers on thumbs
+- justify login text
+
+Refactor:
+- 
 
 curl_errno and curl_error
 int: CURLOPT_CONNECTTIMEOUT CURLOPT_HTTPAUTH=CURLAUTH_BASIC CURLOPT_MAXREDIRS

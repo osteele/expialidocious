@@ -1,38 +1,6 @@
 <!--
 Sign in:
-- don't login with empty username or password
-- flash the button on enter
-- "remember me"
 - underlined links
-- Enter on button
-
-Publish:
-- heads up to delicious
-- http://weblog.infoworld.com/udell/2005/12/20.html#a1357
-- wiki page
-
-Corners:
-- check large tags
-- verify old selector against new
-
-Features:
-- number of posts
-- tooltips
-- hover tags
-- show empty days
-- show number of posts, tags
-
-Tuning:
-- fix dragging bottom thumb
-- rank sizes
-- update during animation
-- drag the selector itself
-
-Visuals:
-- animation for retrieving data
-- skip rhs of left thumb
-- grippers on thumbs
-- mouseover graph
 -->
 <canvas proxied="false" title="expialidocio.us">
   <!--include href="incubator/tooltip/tooltip.lzx"/-->
@@ -330,12 +298,19 @@ Visuals:
       width="250" spacing="2"
       visible="${appstate.state=='login'}"
       fontsize="14">
+  <method name="updateButtons">
+    submitButton.setAttribute('enable', this.userText != '' &amp;&amp; this.passwordText != nil);
+  </method>
   <method name="submit"><![CDATA[
+    var username = userField.getText();
     // sometimes the password has an initial newline?
-    var split = passwordField.getAttribute('text').split();
+    var split = passwordField.getText().split();
     var password = '';
     for (var i = 0; i < split.length; i++) password += split[i];
-    appstate.signin(userField.getAttribute('text'), password)
+Debug.write('username="'+username+'"');
+Debug.write('password="'+password+'"');
+if (username=='' || password=='') return;
+    appstate.signin(username, password)
   ]]></method>
   
 <text multiline="true" width="100%" fontsize="16">To view your tags, you must log in with your <a href="http://del.icio.us" target="_blank"><u><font color="#0000ff">del.icio.us</font></u></a> username and password.</text>
@@ -351,12 +326,13 @@ Visuals:
 <view>
   <text id="passwordLabel">password:</text>
   <edittext id="passwordField" x="${userField.x}" password="true">
-    <method event="onkeyup" args="k">if (k==13) loginView.submit();</method>
+    <method event="onkeydown" args="k">if (k==13) loginView.submit();</method>
   </edittext>
 </view>
 
-<roundrectbutton x="${userField.x}" height="20" onclick="loginView.submit()">
+<roundrectbutton id="submitButton" x="${userField.x}" height="20" onclick="loginView.submit()">
   log in
+  <method event="onkeydown" args="k">if (k==13) loginView.submit();</method>
 </roundrectbutton>
 <!--checkbox>Remember me</checkbox-->
 
