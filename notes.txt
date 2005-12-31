@@ -7,3 +7,28 @@ client:
 server:
 - throttling
 
+curl_errno and curl_error
+int: CURLOPT_CONNECTTIMEOUT CURLOPT_HTTPAUTH=CURLAUTH_BASIC CURLOPT_MAXREDIRS
+bool: CURLOPT_FAILONERROR CURLOPT_FOLLOWLOCATION CURLOPT_HEADER CURLOPT_RETURNTRANSFER
+string: CURLOPT_REFERER
+array: CURLOPT_HTTPHEADER
+//_error
+//_setopt
+
+	 if (!$file) {
+		 header('WWW-Authenticate: Basic realm="My Realm"');
+		 header('HTTP/1.0 401 Unauthorized');
+		 echo "del.icio.us didn't like that username and password.";
+	 }
+
+	//curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+	//curl_setopt($ch, CURLOPT_HEADERFUNCTION, 'curlHeaderCallback');
+
+	function curlHeaderCallback($resURL, $strHeader) {
+		if (preg_match('/^HTTP/i', $strHeader)) {
+			header($strHeader);
+			header('Content-Disposition: attachment; filename="file-name.zip"');
+		}
+		return strlen($strHeader);
+	}
+	

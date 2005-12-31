@@ -9,27 +9,27 @@ var base64Chars = [
     '4','5','6','7','8','9','+','/'
     ];
 
-function base64(input){
+function encode64(input){
   var result = '';
   var col = 0;
   var i = 0;
-  function next(){
-    if (i >= input.length) return null;
-    return input.charCodeAt(i++) & 0xff;
+  function next() {
+    return i < input.length && input.charCodeAt(i++) & 0xff;
   }
-  while (i < input.length) {
+  while (true) {
     var b0 = next();
+	if (b0 == false) break;
     result += base64Chars[b0 >> 2];
     var bits = b0 << 4;
     var b1 = next();
     bits |= b1 >> 4;
     result += base64Chars[bits & 0x3F];
-    if (b1 == null) {result += '=='; break;}
+    if (b1 == false) {result += '=='; break;}
     bits = b1 << 2;
     var b2 = next();
     bits |= b2 >> 6;
     result += base64Chars[bits & 0x3F];
-    if (b2 == null) {result += '='; break;}
+    if (b2 == false) {result += '='; break;}
     result += base64Chars[b2 & 0x3F];
     if ((col += 4) >= 76){
         result += '\n';
@@ -39,6 +39,9 @@ function base64(input){
   return result;
 }
 
+//print(encode64("osteele:passwd"));
+
+/*
 function encodeBase64b(input){
   var result = '';
   var col = 0;
@@ -75,8 +78,4 @@ function c64(str) {
     print(encodeBase64b(str));
     print(encodeBase64(str));
 }
-c64('osteele:tsn0plade');
-//print(encodeBase64b("osteele:tsn0plade"));
-//print(encodeBase64("osteele:tsn0plade"));
-print("b3N0ZWVsZTp0c24wcGxhZGU=");
   */

@@ -1,11 +1,17 @@
 <!--
+Sign in:
+- don't login with empty username or password
+- flash the button on enter
+- "remember me"
+- underlined links
+- Enter on button
+
 Publish:
+- heads up to delicious
 - http://weblog.infoworld.com/udell/2005/12/20.html#a1357
 - wiki page
 
 Corners:
-- empty data
-- bad login
 - check large tags
 - verify old selector against new
 
@@ -23,44 +29,64 @@ Tuning:
 - drag the selector itself
 
 Visuals:
+- animation for retrieving data
 - skip rhs of left thumb
 - grippers on thumbs
 - mouseover graph
 -->
 <canvas proxied="false" title="expialidocio.us">
   <!--include href="incubator/tooltip/tooltip.lzx"/-->
+  <include href="incubator/roundrectbutton.lzx"/>
+  <include href="incubator/ulink.lzx"/>
   <include href="thumb.lzx"/>
   <script src="analyzer.js"/>
-  <!--script src="base64.js"/-->
+  <script src="base64.js"/>
   <script src="colors.js"/>
   <splash/>
   
   <dataset name="ds" src="http:data.xml" ondata="canvas.processTags()"/>
   
-  <script>
+  <script><![CDATA[
+    function isRemoteRequest(source) {
+      return ' staging proxy local '.indexOf(' '+source+' ') >= 0;
+    }
     function requestPosts() {
       if (source == 'staging')
         url = 'http://localhost/proxy.php';
       else if (source == 'proxy') {
-        url = 'http:proxy.php';
+        url = 'http://expialidocio.us/proxy.php';
       } else if (source) {
         url = 'http:tests/' + source + '.xml';
       }
+      if (arguments.length >= 2 && url.slice(0,7)=='http://') {
+        var username = arguments[0];
+	var password = arguments[1];
+        ds.setQueryType('POST');
+        ds.setQueryParams({user: username, password: password})
+      }
       Debug.write(url);
       ds.setSrc(url);
-      //credits.setAttribute('state', 'retrieving');
+      appstate.setAttribute('state', 'retrieving');
       ds.doRequest();
     }
-    //ds.setHeader('authorization', 'Basic ' + base64(account+':'+password));
     if (_root['source'] == undefined) source = 'posts';
-    requestPosts(source);
-  </script>
+    if (source != 'staging' && source != 'proxy') requestPosts(source);
+  ]]></script>
   
   <method name="processTags"><![CDATA[
     TagData = new DataFrame;
+    if (ds.data.nodeName=='error') {
+      var message =
+        ds.data.attributes['code'] == '401' ?
+        'Invalid username or password.  Please try again.' :
+        LzBrowser.urlUnescape(ds.data.attributes['message']);
+      Debug.write(message);
+      loginView.errorMessage.setAttribute('text', message);
+      return appstate.setAttribute('state', 'login');
+    }
     if (!(ds.data.childNodes||[]).length)
-      return credits.setAttribute('state', 'empty');
-    credits.setAttribute('state', 'running');
+      return appstate.setAttribute('state', 'empty');
+    appstate.setAttribute('state', 'running');
     
     TagData.processTags(ds.data);
     UserName = ds.data.attributes['user'];
@@ -84,10 +110,33 @@ Visuals:
     credits.animate('y', myview.y+myview.height+40, 0);
   ]]></method>
   
+  <node id="appstate">
+    <attribute name="state" type="string" value="login"/>
+    <method name="signin" args="username, password"><![CDATA[
+      loginView.errorMessage.setAttribute('text', '');
+      loggedInAs.setAttribute('text', username);
+      //ds.setHeader('Authorization', 'Basic ' + encode64(username+':'+password));
+      requestPosts(username, password);
+    ]]></method>
+    <method name="signout">
+      appstate.setAttribute('state', 'login');
+      credits.setAttribute('y', 0)
+    </method>
+  </node>
+  
   <class name="dateLabel" extends="text" resize="true"
          fontsize="24" fgcolor="#60ff60"/>
   
-<view id="myview" width="100%" layout="axis: y" opacity="0.1">
+  <hbox id="loggedIn" align="right" visible="${appstate.state != 'login'}" fontsize="14" y="5">
+    <text>username:</text>
+    <text id="loggedInAs" resize="true"/>
+    <view width="2"/>
+    <roundrectbutton width="$once{null}" height="15" y="4" onclick="appstate.signout()">Logout</roundrectbutton>
+    <view width="10" height="25"/>
+  </hbox>
+  
+  <view id="myview" width="100%" layout="axis: y" opacity="0.1"
+	visible="${appstate.state=='running'}" y="${loggedIn.height}">
   <view id="cloud" width="${parent.width-20}" x="10" height="200" bgcolor="#f0f0ff">
     <attribute name="rangeMin" value="null"/>
     <attribute name="rangeMax" value="null"/>
@@ -119,7 +168,7 @@ Visuals:
         var fontsize = 10+12*s;
         var color = long2css(scaleColor(cloud.bgcolor, 0x0000FF, 0.25+0.75*s));
         var label = '<font size=\"' + fontsize + '" color="' + color + '">' + tagname + ' </font>'
-	var url = 'http://del.icio.us/' + UserName + '/tags/' + tagname
+	var url = 'http://del.icio.us/' + UserName + '/' + tagname
         str += '<a href=\"' + url + '\" target="_blank">' + label + '</a>'
       }
       tags.setText(str);
@@ -258,19 +307,62 @@ Visuals:
 
 <view x="25%" width="50%" y="${credits.height}" fontsize="24">
 
-<text visible="${credits.state=='initial'}" width="100%" align="center" valign="middle" multiline="true">This page will display an interactive summary of your <a href="http://del.icio.us" target="_blank"><u><font color="#0000ff">de.licio.us activity</font></u></a>.  In order to retrieve this information, your browser will ask you for your de.licio.us name and password.  This information is only stored in your browser.</text>
+<text visible="${appstate.state=='retrieving'}" width="100%" align="center" valign="middle" multiline="true">Retrieving data...</text>
 
-<text visible="${credits.state=='retrieving'}" width="100%" align="center" valign="middle" multiline="true">Retrieving data...</text>
-
-<text visible="${credits.state=='empty'}" width="100%" align="center" valign="middle" multiline="true"><a href="http://del.icio.us"><u><font color="#0000ff">de.licio.us</font></u></a> doesn't show any posts tagged with your account.  This could be because you haven't tagged any pages, in which case you should tag some and then come back here.  Or it could be because the del.icio.us server is responding null.</text>
+<text visible="${appstate.state=='empty'}" width="100%" align="center" valign="middle" multiline="true"><a href="http://del.icio.us"><u><font color="#0000ff">de.licio.us</font></u></a> doesn't show any posts tagged with your account.  This could be because you haven't tagged any pages, in which case you should tag some and then come back here.  Or it could be because the del.icio.us server is responding null.</text>
 </view>
 
 <view id="credits" layout="axis: y">
-<attribute name="state" type="string" value="initial"/>
 <text id="logo" fgcolor="#ff4040" fontsize="48">expialidocio.us</text>
-<text visible="${credits.state=='running'}" multiline="true" width="${logo.width}" fgcolor="#444">The bar chart displays the number of posts you've tagged, for each day that you've tagged any posts at all.  The tag cloud contains tags for the selected range of dates.  Drag the red slider to move the date range; drag the side handles to extend it.  Click on a tag name to visit your de.licio.us page for that tag.</text>
+<text visible="${appstate.state=='running'}" multiline="true" width="${logo.width}" fgcolor="#444">The bar chart displays the number of posts you've tagged, for each day that you've tagged any posts at all.  The tag cloud contains tags for the selected range of dates.  Drag the red slider to move the date range; drag the side handles to extend it.  Click on a tag name to visit your de.licio.us page for that tag.</text>
 <text fgcolor="#222"><i>Copyright 2005 by <a href="http://osteele.com"><u><font color="#0000ff">Oliver Steele</font></u></a>.  All rights reserved.</i></text>
+<hbox>
+  <ulink href="about/about.html">About</ulink>
+  <text>|</text>
+  <ulink href="mailto:steele@osteele.com">Contact</ulink>
+  <text>|</text>
+  <ulink href="about/privacy.html">Privacy</ulink>
+</hbox>
 </view>
+
+<vbox id="loginView" align="center"
+      y="${credits.y+credits.height+20}"
+      width="250" spacing="2"
+      visible="${appstate.state=='login'}"
+      fontsize="14">
+  <method name="submit"><![CDATA[
+    // sometimes the password has an initial newline?
+    var split = passwordField.getAttribute('text').split();
+    var password = '';
+    for (var i = 0; i < split.length; i++) password += split[i];
+    appstate.signin(userField.getAttribute('text'), password)
+  ]]></method>
+  
+<text multiline="true" width="100%" fontsize="16">To view your tags, you must log in with your <a href="http://del.icio.us" target="_blank"><u><font color="#0000ff">del.icio.us</font></u></a> username and password.</text>
+  <ulink href="about/why-login.html" target="_blank" fontsize="12">Why?</ulink>
+  <ulink href="about/privacy.html" target="_blank" fontsize="12">Where is this information stored?</ulink>
+
+<view>
+  <text id="userLabel">username:</text>
+  <edittext id="userField" x="${Math.max(userField.width, passwordField.width)+10}">
+    <method event="onkeyup" args="k">if (k==13) loginView.submit();</method>
+  </edittext>
+</view>
+<view>
+  <text id="passwordLabel">password:</text>
+  <edittext id="passwordField" x="${userField.x}" password="true">
+    <method event="onkeyup" args="k">if (k==13) loginView.submit();</method>
+  </edittext>
+</view>
+
+<roundrectbutton x="${userField.x}" height="20" onclick="loginView.submit()">
+  log in
+</roundrectbutton>
+<!--checkbox>Remember me</checkbox-->
+
+<text name="errorMessage" width="100%" fgcolor="red" resize="true" multiline="true"/>
+
+</vbox>
 
 <debug/>
 </canvas>
