@@ -1,8 +1,7 @@
 Publish:
-- heads up to delicious
-- make movie, publish 
+- better font
 - http://weblog.infoworld.com/udell/2005/12/20.html#a1357
-- wiki page
+- add to OL wiki
 
 Corners:
 - check large tags
@@ -24,9 +23,9 @@ Tuning:
 - update during animation
 - drag the selector itself
 
-Visuals:
+Cosmetics:
+- move the dates outwards
 - animation while retrieving data
-- flash the button on enter
 - show dimmed login while data is coming in
 - skip rhs of left thumb
 - grippers on thumbs

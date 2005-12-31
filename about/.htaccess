@@ -1,0 +1,5 @@
+RewriteEngine on
+
+RewriteCond %{HTTP_USER_AGENT} !CoralWebPrx [NC]
+RewriteCond %{HTTP_USER_AGENT} !GoogleBot [NC]
+RewriteRule ^(expialidocio.us(.mov|.png|-thumb.png))$ http://expialidocio.us.nyud.net:8090%{REQUEST_URI} [R,L]
