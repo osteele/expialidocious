@@ -1,21 +1,17 @@
 Publish:
 - better font
+- wait until Wednesday or response from del.icio.us
 - http://weblog.infoworld.com/udell/2005/12/20.html#a1357
 - add to OL wiki
 
-Corners:
-- check large tags
-- verify old selector against new
-
 Features:
 - store login in cookie
-- show number of posts
-- tooltips
-- hover tags
-- show empty days
-- show number of posts, tags
-- link to everyone's or just mine
+- show stats
 - mouseover graph
+- mouseover tags
+- show empty days
+- link to everyone's or just mine
+- double-click on bottom thumb
 
 Tuning:
 - fix dragging bottom thumb
@@ -24,6 +20,7 @@ Tuning:
 - drag the selector itself
 
 Cosmetics:
+- tooltips
 - move the dates outwards
 - animation while retrieving data
 - show dimmed login while data is coming in
@@ -32,7 +29,7 @@ Cosmetics:
 - justify login text
 
 Refactor:
-- 
+- verify old selector against new
 
 curl_errno and curl_error
 int: CURLOPT_CONNECTTIMEOUT CURLOPT_HTTPAUTH=CURLAUTH_BASIC CURLOPT_MAXREDIRS

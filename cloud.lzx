@@ -2,7 +2,7 @@
 Sign in:
 - underlined links
 -->
-<canvas proxied="false" title="expialidocio.us">
+<canvas proxied="false" title="expialidocio.us" height="100%">
   <!--include href="incubator/tooltip/tooltip.lzx"/-->
   <include href="incubator/roundrectbutton.lzx"/>
   <include href="incubator/ulink.lzx"/>
@@ -37,8 +37,6 @@ Sign in:
       appstate.setAttribute('state', 'retrieving');
       ds.doRequest();
     }
-    if (_root['source'] == undefined) source = 'posts';
-    if (source != 'staging' && source != 'proxy') requestPosts(source);
   ]]></script>
   
   <method name="processTags"><![CDATA[
@@ -46,7 +44,7 @@ Sign in:
     if (ds.data.nodeName=='error') {
       var message =
         ds.data.attributes['code'] == '401' ?
-        'Invalid username or password.  Please try again.' :
+        "Del.icio.us didn't accept your username and password.  Please try again.<br/><font size='10' color='#000'>If the problem persists, del.icio.us may be refusing requests from the expialidocio.us server.  If you're certain you got your name and password right, please try again tomorrow.</font>" :
         LzBrowser.urlUnescape(ds.data.attributes['message']);
       Debug.write(message);
       loginView.errorMessage.setAttribute('text', message);
@@ -97,7 +95,7 @@ Sign in:
   
   <hbox id="loggedIn" align="right" visible="${appstate.state != 'login'}" fontsize="14" y="5">
     <text>username:</text>
-    <text id="loggedInAs" resize="true"/>
+    <text id="loggedInAs" resize="true" fontstyle="bold"/>
     <view width="2"/>
     <roundrectbutton width="$once{null}" height="15" y="4" onclick="appstate.signout()">Logout</roundrectbutton>
     <view width="10" height="25"/>
@@ -179,7 +177,7 @@ Sign in:
   <drawview id="bars"
             y="210" x="25%" width="50%" height="100"
             bgcolor="#d0d0ff">
-    <method name="drawGraph"><![CDATA[
+    <method name="drawGraph" event="onwidth"><![CDATA[
       var sums = DatePosts;//TagData.getColumnSums();
       var w = this.step = width/sums.length;
       var max = 0;
@@ -273,10 +271,8 @@ Sign in:
   </view>
 </view>
 
-<view x="25%" width="50%" y="${credits.height}" fontsize="24">
-
-<text visible="${appstate.state=='retrieving'}" width="100%" align="center" valign="middle" multiline="true">Retrieving data...</text>
-
+<!-- FIXME: ${credits.height} is too high -->
+<view x="25%" width="50%" y="150" fontsize="24">
 <text visible="${appstate.state=='empty'}" width="100%" align="center" valign="middle" multiline="true"><a href="http://del.icio.us"><u><font color="#0000ff">de.licio.us</font></u></a> doesn't show any posts tagged with your account.  This could be because you haven't tagged any pages, in which case you should tag some and then come back here.  Or it could be because the del.icio.us server is responding null.</text>
 </view>
 
@@ -293,52 +289,12 @@ Sign in:
 </hbox>
 </view>
 
-<vbox id="loginView" align="center"
-      y="${credits.y+credits.height+20}"
-      width="250" spacing="2"
-      visible="${appstate.state=='login'}"
-      fontsize="14">
-  <method name="updateButtons">
-    submitButton.setAttribute('enable', this.userText != '' &amp;&amp; this.passwordText != nil);
-  </method>
-  <method name="submit"><![CDATA[
-    var username = userField.getText();
-    // sometimes the password has an initial newline?
-    var split = passwordField.getText().split();
-    var password = '';
-    for (var i = 0; i < split.length; i++) password += split[i];
-Debug.write('username="'+username+'"');
-Debug.write('password="'+password+'"');
-if (username=='' || password=='') return;
-    appstate.signin(username, password)
-  ]]></method>
+  <include href="login.lzx"/>
   
-<text multiline="true" width="100%" fontsize="16">To view your tags, you must log in with your <a href="http://del.icio.us" target="_blank"><u><font color="#0000ff">del.icio.us</font></u></a> username and password.</text>
-  <ulink href="about/why-login.html" target="_blank" fontsize="12">Why?</ulink>
-  <ulink href="about/privacy.html" target="_blank" fontsize="12">Where is this information stored?</ulink>
-
-<view>
-  <text id="userLabel">username:</text>
-  <edittext id="userField" x="${Math.max(userField.width, passwordField.width)+10}">
-    <method event="onkeyup" args="k">if (k==13) loginView.submit();</method>
-  </edittext>
-</view>
-<view>
-  <text id="passwordLabel">password:</text>
-  <edittext id="passwordField" x="${userField.x}" password="true">
-    <method event="onkeydown" args="k">if (k==13) loginView.submit();</method>
-  </edittext>
-</view>
-
-<roundrectbutton id="submitButton" x="${userField.x}" height="20" onclick="loginView.submit()">
-  log in
-  <method event="onkeydown" args="k">if (k==13) loginView.submit();</method>
-</roundrectbutton>
-<!--checkbox>Remember me</checkbox-->
-
-<text name="errorMessage" width="100%" fgcolor="red" resize="true" multiline="true"/>
-
-</vbox>
-
-<debug/>
+  <debug/>
+  
+  <script>
+    if (_root['source'] == undefined) source = 'posts';
+    if (!isRemoteRequest(source)) requestPosts(source);
+  </script>
 </canvas>

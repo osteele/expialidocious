@@ -1,17 +1,22 @@
-
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-   <head>
-      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="SHORTCUT ICON" href="favicon.ico">
+<title>expialidocio.us</title>
+<style type="text/css">
+html, body { margin: 0; padding: 0; height: 100%; }
+body { background-color: #ffffff; }
+#flashcontent { height: 100%; }
+.fallback { margin: 5px }
+</style></head>
+<script type="text/javascript" src="javascript/flashobject.js"></script>
+<body>
 
-      <link rel="SHORTCUT ICON" href="http://www.laszlosystems.com/favicon.ico">
-      <title>expialidocio.us</title><style type="text/css">
-          html, body { margin: 0; padding: 0; height: 100%; }
-          body { background-color: #ffffff; }
-        </style></head>
-   <body><object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
+<!--
+<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
 codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,79,0"
 data="cloud.swf?source=proxy&amp;lzproxied=false" width="100%" height="100%">
          <param name="movie" value="cloud.swf?source=proxy&amp;lzproxied=false">
@@ -23,5 +28,32 @@ data="cloud.swf?source=proxy&amp;lzproxied=false" width="100%" height="100%">
          <embed src="cloud.swf?source=proxy&amp;lzproxied=false" quality="high"
 scale="noscale" salign="lt" width="100%" height="100%" bgcolor="#ffffff"
 type="application/x-shockwave-flash"
-pluginspage="http://www.macromedia.com/go/getflashplayer"></embed></object></body>
+pluginspage="http://www.macromedia.com/go/getflashplayer"></embed></object>
+-->
+
+<div id="flashcontent">
+<div class="fallback">
+  <p><a class="logo" href="http://expialodocio.us">Expialidocio.us</a> uses   the <a href="http://openlaszlo.org">OpenLaszlo</a> platform and the <a href="http://del.icio.us/help/api/">del.icio.us API</a> to display an interactive histogram and time-specific tag cloud of your posting activity.</p>
+
+  <a href="about/expialidocio.us.mov"><img src="about/expialidocio.us-thumb.png" style="border: 0" alt="screencast"/></a>
+  
+  <p><span class="logo">Expialidociou.us</span> requires the Flash plugin.  If the plugin is already installed, click <a href="?detectflash=false">here</a>.</p>
+</div>
+</div>
+
+<script type="text/javascript">
+var fo = new FlashObject("cloud.swf", "cloud", "100%", "100%", "7", "#FFFFFF");
+fo.addParam("scale", "noscale");
+fo.addVariable("source", "proxy");
+fo.addVariable("lzproxied", "false");
+fo.write("flashcontent");
+</script>
+
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript">
+</script>
+<script type="text/javascript">
+_uacct = "UA-202010-3";
+urchinTracker();
+</script>
+</body>
 </html>

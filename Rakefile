@@ -3,13 +3,31 @@ require 'ows_tasks'
 require 'laszlo'
 #require 'laszlo_tasks'
 
-task :default => :upload
+task :default => :deploy
 CLEAN.include 'cloud.swf'
-UPLOADS = %w{cloud.swf index.html proxy.php about}
+UPLOADS = %w{cloud.swf index.html proxy.php favicon.ico javascript about}
 
 file 'cloud.swf' => ['cloud.lzx', 'analyzer.js'] do |t|
   puts "Compiling #{t.prerequisites.first} => #{t.name}"
   Laszlo::compile t.prerequisites.first, :output => t.name
+end
+
+%w{about/privacy.html about/why-login.html}.each do |f|
+  file f => ['about/about.html', 'Rakefile'] do |t|
+    source = File.open('about/about.html').read
+    header = source =~ /^.*<!--header:end-->/m && $&
+    footer = source =~ /<!--footer:begin-->.*$/m && $&
+    title = File.basename(t.name, '.html').split(/-/).map{|w|w.capitalize}.join(' ')
+    title += '?' if title =~ /^Why/
+    #puts title
+    text = File.open(t.name).read
+    title = $1 if text =~ /<title>(.*)<\/title>/
+    header.gsub!('>About<', ">#{title}<")
+    text.gsub!(/^.*<!--header:end-->/m, header)
+    text.gsub!(/<!--footer:begin-->.*$/m, footer)
+    puts 'updating ' + t.name
+    File.open(t.name, 'w') {|f| f<<text}
+  end
 end
 
 desc "Synchronize proxy.php between staging and cwd"
@@ -23,8 +41,26 @@ end
 
 task :deploy => UPLOADS + FileList.new('about/*') do
   onserver = "osteele@osteele.com:expialidocio.us" 
-  UPLOADS.each do |f|
-    puts "Uploading #{f}"
-    `rsync -avz -e ssh "#{f}" "#{onserver}"`
-  end
+  sh "rsync -avz -e ssh #{UPLOADS about} #{onserver}"
+  #UPLOADS.each do |f|
+  #  puts "Uploading #{f}"
+  #  `rsync -avz -e ssh "#{f}" "#{onserver}"`
+  #end
+end
+
+task :crossdomain do |t|
+  s = <<EOF
+<?xml version="1.0"?>
+<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
+<cross-domain-policy>
+  <allow-access-from domain="*"/>
+</cross-domain-policy>
+EOF
+  require 'open-uri'
+  ip = open('http://www.whatismyip.com/').read =~ /Your IP\s*-\s*([\d.]*)/ && $1
+  puts "ip = #{ip}"
+  s.gsub!(/(domain=")\*(")/, "\\1#{ip}\\2")
+  #puts s
+  File.open('crossdomain.xml', 'w') do |f| f << s end
+  sh "rsync -avz -e ssh crossdomain.xml osteele@osteele.com:expialidociou.us"
 end
