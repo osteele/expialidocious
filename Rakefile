@@ -1,19 +1,20 @@
 require 'rake/clean'
 require 'ows_tasks'
-require 'laszlo'
-#require 'laszlo_tasks'
+require 'openlaszlo_tasks'
 
 task :default => :deploy
 CLEAN.include 'cloud.swf'
 UPLOADS = %w{cloud.swf index.html proxy.php favicon.ico javascript about}
 
-file 'cloud.swf' => ['cloud.lzx', 'analyzer.js'] do |t|
-  puts "Compiling #{t.prerequisites.first} => #{t.name}"
-  Laszlo::compile t.prerequisites.first, :output => t.name
-end
+file 'cloud.swf' => ['cloud.lzx', 'analyzer.js']
+
+#file 'cloud.swf' => ['cloud.lzx', 'analyzer.js'] do |t|
+#  puts "Compiling #{t.prerequisites.first} => #{t.name}"
+#  Laszlo::compile t.prerequisites.first, :output => t.name
+#end
 
 %w{about/privacy.html about/why-login.html}.each do |f|
-  file f => ['about/about.html', 'Rakefile'] do |t|
+  file f => ['about/about.html'] do |t|
     source = File.open('about/about.html').read
     header = source =~ /^.*<!--header:end-->/m && $&
     footer = source =~ /<!--footer:begin-->.*$/m && $&
@@ -25,7 +26,7 @@ end
     header.gsub!('>About<', ">#{title}<")
     text.gsub!(/^.*<!--header:end-->/m, header)
     text.gsub!(/<!--footer:begin-->.*$/m, footer)
-    puts 'updating ' + t.name
+    puts 'Updating ' + t.name
     File.open(t.name, 'w') {|f| f<<text}
   end
 end
@@ -40,12 +41,9 @@ file 'about/proxy.php.txt' => 'proxy.php' do |t|
 end
 
 task :deploy => UPLOADS + FileList.new('about/*') do
-  onserver = "osteele@osteele.com:expialidocio.us" 
-  sh "rsync -avz -e ssh #{UPLOADS about} #{onserver}"
-  #UPLOADS.each do |f|
-  #  puts "Uploading #{f}"
-  #  `rsync -avz -e ssh "#{f}" "#{onserver}"`
-  #end
+  SERVER_URL = "osteele@osteele.com:expialidocio.us" 
+  sh "rsync -avz -e ssh --exclude=.svn #{UPLOADS.join(' ')} #{SERVER_URL}"
+  sh "rsync -avz -e ssh analyzer.js cloud.lzx colors.js login.lzx thumb.lzx #{SERVER_URL}/src"
 end
 
 task :crossdomain do |t|

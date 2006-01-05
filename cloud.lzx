@@ -1,71 +1,65 @@
 <!--
-Sign in:
-- underlined links
+Copryight 2005-2006 Oliver steele.  Some rights reserved.
+
+This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 2.5 License: http://creativecommons.org/licenses/by-nc-sa/2.5/.
 -->
 <canvas proxied="false" title="expialidocio.us" height="100%">
-  <!--include href="incubator/tooltip/tooltip.lzx"/-->
   <include href="incubator/roundrectbutton.lzx"/>
   <include href="incubator/ulink.lzx"/>
   <include href="thumb.lzx"/>
   <script src="analyzer.js"/>
-  <script src="base64.js"/>
   <script src="colors.js"/>
   <splash/>
   
-  <dataset name="ds" src="http:data.xml" ondata="canvas.processTags()"/>
+  <dataset name="postData" src="http:data.xml" ondata="canvas.processPostDataset()"/>
   
   <script><![CDATA[
-    function isRemoteRequest(source) {
-      return ' staging proxy local '.indexOf(' '+source+' ') >= 0;
+    var ServerURLs = {
+      localhost: 'http://localhost/proxy.php',
+      server: 'http://expialidocio.us/proxy.php'
     }
-    function requestPosts() {
-      if (source == 'staging')
-        url = 'http://localhost/proxy.php';
-      else if (source == 'proxy') {
-        url = 'http://expialidocio.us/proxy.php';
-      } else if (source) {
+    function isRemoteRequest(sourceKey) {
+      return ServerURLs[sourceKey];
+    }
+    function requestPosts(sourceKey, username, password) {
+      var url = ServerURLs[sourceKey];
+      if (url) {
+        postData.setQueryType('POST');
+        postData.setQueryParams({user: username, password: password})
+      } else {
         url = 'http:tests/' + source + '.xml';
       }
-      if (arguments.length >= 2 && url.slice(0,7)=='http://') {
-        var username = arguments[0];
-	var password = arguments[1];
-        ds.setQueryType('POST');
-        ds.setQueryParams({user: username, password: password})
-      }
       Debug.write(url);
-      ds.setSrc(url);
+      postData.setSrc(url);
       appstate.setAttribute('state', 'retrieving');
-      ds.doRequest();
+      postData.doRequest();
     }
   ]]></script>
   
-  <method name="processTags"><![CDATA[
-    TagData = new DataFrame;
-    if (ds.data.nodeName=='error') {
+  <!-- Process the post data, once it has returned.  The dataset's ondata
+  handler invokes this. -->
+  <method name="processPostDataset"><![CDATA[
+    var root = postData.data;
+    if (root.nodeName=='error') {
       var message =
-        ds.data.attributes['code'] == '401' ?
+        root.attributes['code'] == '401' ?
         "Del.icio.us didn't accept your username and password.  Please try again.<br/><font size='10' color='#000'>If the problem persists, del.icio.us may be refusing requests from the expialidocio.us server.  If you're certain you got your name and password right, please try again tomorrow.</font>" :
-        LzBrowser.urlUnescape(ds.data.attributes['message']);
+        LzBrowser.urlUnescape(postData.attributes['message']);
       Debug.write(message);
       loginView.errorMessage.setAttribute('text', message);
       return appstate.setAttribute('state', 'login');
     }
-    if (!(ds.data.childNodes||[]).length)
+    if (!(root.childNodes||[]).length)
       return appstate.setAttribute('state', 'empty');
+    appstate.setAttribute('username', root.attributes['user']);
     appstate.setAttribute('state', 'running');
     
-    TagData.processTags(ds.data);
-    UserName = ds.data.attributes['user'];
+    TagData = new DataFrame;
+    fillTagFrame(TagData, root.childNodes);
     
     SortedTags = [].concat(TagData.rowNames);
     SortedTags.sort();
-    TagSortInverse = [];
-    for (var i = 0; i < SortedTags.length; i++) {
-      var tagname = SortedTags[i];
-      var j = 0;
-      while (TagData.rowNames[j] != tagname) j++;
-      TagSortInverse.push(j);
-    }
+    TagSortInverse = computeArrayinversion(SortedTags, TagData.rowNames);
     
     bars.drawGraph();
     allStart.setText(TagData.columnNames[0]);
@@ -77,12 +71,12 @@ Sign in:
   ]]></method>
   
   <node id="appstate">
+    <attribute name="username" type="string" value=""/>
     <attribute name="state" type="string" value="login"/>
     <method name="signin" args="username, password"><![CDATA[
       loginView.errorMessage.setAttribute('text', '');
-      loggedInAs.setAttribute('text', username);
-      //ds.setHeader('Authorization', 'Basic ' + encode64(username+':'+password));
-      requestPosts(username, password);
+      appState.setAttribute('username', username);
+      requestPosts(source, username, password);
     ]]></method>
     <method name="signout">
       appstate.setAttribute('state', 'login');
@@ -90,12 +84,14 @@ Sign in:
     </method>
   </node>
   
+  <!-- The dates at the bottom of the tag cloud and the histogram. -->
   <class name="dateLabel" extends="text" resize="true"
          fontsize="24" fgcolor="#60ff60"/>
   
-  <hbox id="loggedIn" align="right" visible="${appstate.state != 'login'}" fontsize="14" y="5">
+  <!-- The "logged in" box at the upper right -->
+  <hbox id="loggedIn" align="right" visible="${appstate.state == 'running'}" fontsize="14" y="5">
     <text>username:</text>
-    <text id="loggedInAs" resize="true" fontstyle="bold"/>
+    <text resize="true" fontstyle="bold" text="${appstate.username}"/>
     <view width="2"/>
     <roundrectbutton width="$once{null}" height="15" y="4" onclick="appstate.signout()">Logout</roundrectbutton>
     <view width="10" height="25"/>
@@ -132,9 +128,10 @@ Sign in:
         var s = (count - min) / (max - min);
         var c = Math.floor(255*(1-1.0*s));
         var fontsize = 10+12*s;
-        var color = long2css(scaleColor(cloud.bgcolor, 0x0000FF, 0.25+0.75*s));
+	// TODO: change this to cloud.fgcolor
+        var color = long2css(interpolateColors(cloud.bgcolor, 0x0000FF, 0.25+0.75*s));
         var label = '<font size=\"' + fontsize + '" color="' + color + '">' + tagname + ' </font>'
-	var url = 'http://del.icio.us/' + UserName + '/' + tagname
+	var url = 'http://del.icio.us/' + appstate.username + '/' + tagname
         str += '<a href=\"' + url + '\" target="_blank">' + label + '</a>'
       }
       tags.setText(str);
@@ -146,8 +143,8 @@ Sign in:
     <dateLabel id="currentStart" align="left" valign="bottom"/>
     <dateLabel id="currentEnd" align="right" valign="bottom"/>
     <method name="update" event="onx" reference="bars.selector">
-      var h = 50;
-      var r = 20;
+      var h = this.height;
+      var r = 20; // rounding radius
       var x0 = cloud.getAttributeRelative('x', this)-10;
       var x1 = bars.selector.getAttributeRelative('x', this)-10;
       var x2 = x1+bars.selector.getAttributeRelative('width', this);
@@ -178,7 +175,8 @@ Sign in:
             y="210" x="25%" width="50%" height="100"
             bgcolor="#d0d0ff">
     <method name="drawGraph" event="onwidth"><![CDATA[
-      var sums = DatePosts;//TagData.getColumnSums();
+      if (appstate.state != 'running') return;
+      var sums = TagData.getColumnSums();
       var w = this.step = width/sums.length;
       var max = 0;
       for (var i = 0; i < sums.length; i++)
@@ -279,7 +277,7 @@ Sign in:
 <view id="credits" layout="axis: y">
 <text id="logo" fgcolor="#ff4040" fontsize="48">expialidocio.us</text>
 <text visible="${appstate.state=='running'}" multiline="true" width="${logo.width}" fgcolor="#444">The bar chart displays the number of posts you've tagged, for each day that you've tagged any posts at all.  The tag cloud contains tags for the selected range of dates.  Drag the red slider to move the date range; drag the side handles to extend it.  Click on a tag name to visit your de.licio.us page for that tag.</text>
-<text fgcolor="#222"><i>Copyright 2005 by <a href="http://osteele.com"><u><font color="#0000ff">Oliver Steele</font></u></a>.  All rights reserved.</i></text>
+<text fgcolor="#222"><i>Copyright 2005 by <a href="http://osteele.com"><u><font color="#0000ff">Oliver Steele</font></u></a>.  <a href="http://creativecommons.org/licenses/by-nc-sa/2.5/">Some rights reserved.</a></i></text>
 <hbox>
   <ulink href="about/about.html">About</ulink>
   <text>|</text>
