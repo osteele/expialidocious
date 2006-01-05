@@ -15,22 +15,6 @@ body { background-color: #ffffff; }
 <script type="text/javascript" src="javascript/flashobject.js"></script>
 <body>
 
-<!--
-<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
-codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,79,0"
-data="cloud.swf?source=proxy&amp;lzproxied=false" width="100%" height="100%">
-         <param name="movie" value="cloud.swf?source=proxy&amp;lzproxied=false">
-         <param name="quality" value="high">
-         <param name="scale" value="noscale">
-         <param name="salign" value="LT">
-         <param name="menu" value="false">
-         <param name="bgcolor" value="#ffffff">
-         <embed src="cloud.swf?source=proxy&amp;lzproxied=false" quality="high"
-scale="noscale" salign="lt" width="100%" height="100%" bgcolor="#ffffff"
-type="application/x-shockwave-flash"
-pluginspage="http://www.macromedia.com/go/getflashplayer"></embed></object>
--->
-
 <div id="flashcontent">
 <div class="fallback">
   <p><a class="logo" href="http://expialodocio.us">Expialidocio.us</a> uses   the <a href="http://openlaszlo.org">OpenLaszlo</a> platform and the <a href="http://del.icio.us/help/api/">del.icio.us API</a> to display an interactive histogram and time-specific tag cloud of your posting activity.</p>
@@ -44,7 +28,7 @@ pluginspage="http://www.macromedia.com/go/getflashplayer"></embed></object>
 <script type="text/javascript">
 var fo = new FlashObject("cloud.swf", "cloud", "100%", "100%", "7", "#FFFFFF");
 fo.addParam("scale", "noscale");
-fo.addVariable("source", "proxy");
+fo.addVariable("source", "server");
 fo.addVariable("lzproxied", "false");
 fo.write("flashcontent");
 </script>
