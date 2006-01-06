@@ -2,33 +2,31 @@ require 'rake/clean'
 require 'ows_tasks'
 require 'openlaszlo_tasks'
 
-task :default => :deploy
-CLEAN.include 'cloud.swf'
+SERVER_URL = 'osteele@osteele.com:expialidocio.us'
 UPLOADS = %w{cloud.swf index.html proxy.php favicon.ico javascript about}
 PUBLIC_SOURCES=%w{expialidocious.png analyzer.js cloud.lzx colors.js login.lzx thumb.lzx}
+ABOUT_HTML = FileList.new 'about/*.html'
+ABOUT_MASTER = 'about/about.html'
 
-file 'cloud.swf' => ['cloud.lzx', 'analyzer.js']
+task :default => :deploy
+CLEAN.include 'cloud.swf'
 
-#file 'cloud.swf' => ['cloud.lzx', 'analyzer.js'] do |t|
-#  puts "Compiling #{t.prerequisites.first} => #{t.name}"
-#  Laszlo::compile t.prerequisites.first, :output => t.name
-#end
+file 'cloud.swf' => ['analyzer.js', 'colors.js', 'thumb.lzx']
 
-%w{about/privacy.html about/why-login.html}.each do |f|
-  file f => ['about/about.html'] do |t|
-    source = File.open('about/about.html').read
+(ABOUT_HTML - ABOUT_MASTER].each do |f|
+  file f => ABOUT_MASTER do |t|
+    source = File.open(ABOUT_MASTER).read
     header = source =~ /^.*<!--header:end-->/m && $&
     footer = source =~ /<!--footer:begin-->.*$/m && $&
     title = File.basename(t.name, '.html').split(/-/).map{|w|w.capitalize}.join(' ')
     title += '?' if title =~ /^Why/
-    #puts title
     text = File.open(t.name).read
     title = $1 if text =~ /<title>(.*)<\/title>/
     header.gsub!('>About<', ">#{title}<")
     text.gsub!(/^.*<!--header:end-->/m, header)
     text.gsub!(/<!--footer:begin-->.*$/m, footer)
-    puts 'Updating ' + t.name
-    File.open(t.name, 'w') {|f| f<<text}
+    puts 'Updating ' + t.name if verbose
+    File.open(t.name, 'w') {|f| f << text}
   end
 end
 
@@ -41,10 +39,17 @@ file 'about/proxy.php.txt' => 'proxy.php' do |t|
   cp t.prerequisites.first, t.name
 end
 
-task :deploy => UPLOADS + FileList.new('about/*') do
+task :deploy_sources do
+  sh "rsync -avz -e ssh #{PUBLIC_SOURCES.join(' ')} #{SERVER_URL}/src"
+end
+
+task :deploy_about => FileList.new('about/*') do |t|
+  sh "rsync -avz -e ssh --exclude=.svn about #{SERVER_URL}"
+end
+
+task :deploy => UPLOADS + [:deploy_sources, :deploy_about] do
   SERVER_URL = "osteele@osteele.com:expialidocio.us" 
   sh "rsync -avz -e ssh --exclude=.svn #{UPLOADS.join(' ')} #{SERVER_URL}"
-  sh "rsync -avz -e ssh #{PUBLIC_SOURCES.join(' ')} #{SERVER_URL}/src"
 end
 
 task :crossdomain do |t|
