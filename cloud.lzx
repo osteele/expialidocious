@@ -77,7 +77,7 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
     <attribute name="state" type="string" value="login"/>
     <method name="signin" args="username, password"><![CDATA[
       loginView.errorMessage.setAttribute('text', '');
-      appState.setAttribute('username', username);
+      appstate.setAttribute('username', username);
       requestPosts(source, username, password);
     ]]></method>
     <method name="signout">
@@ -277,7 +277,7 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
 </view>
 
 <view id="credits" layout="axis: y">
-<text id="logo" fgcolor="#ff4040" fontsize="48">expialidocio.us</text>
+<view id="logo" resource="expialidocious.png"/>
 <text visible="${appstate.state=='running'}" multiline="true" width="${logo.width}" fgcolor="#444">The bar chart displays the number of posts you've tagged, for each day that you've tagged any posts at all.  The tag cloud contains tags for the selected range of dates.  Drag the red slider to move the date range; drag the side handles to extend it.  Click on a tag name to visit your de.licio.us page for that tag.</text>
 <text fgcolor="#222"><i>Copyright 2005 by <a href="http://osteele.com"><u><font color="#0000ff">Oliver Steele</font></u></a>.  <a href="http://creativecommons.org/licenses/by-nc-sa/2.5/">Some rights reserved.</a></i></text>
 <hbox>

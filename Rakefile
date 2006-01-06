@@ -5,6 +5,7 @@ require 'openlaszlo_tasks'
 task :default => :deploy
 CLEAN.include 'cloud.swf'
 UPLOADS = %w{cloud.swf index.html proxy.php favicon.ico javascript about}
+PUBLIC_SOURCES=%w{expialidocious.png analyzer.js cloud.lzx colors.js login.lzx thumb.lzx}
 
 file 'cloud.swf' => ['cloud.lzx', 'analyzer.js']
 
@@ -43,7 +44,7 @@ end
 task :deploy => UPLOADS + FileList.new('about/*') do
   SERVER_URL = "osteele@osteele.com:expialidocio.us" 
   sh "rsync -avz -e ssh --exclude=.svn #{UPLOADS.join(' ')} #{SERVER_URL}"
-  sh "rsync -avz -e ssh analyzer.js cloud.lzx colors.js login.lzx thumb.lzx #{SERVER_URL}/src"
+  sh "rsync -avz -e ssh #{PUBLIC_SOURCES.join(' ')} #{SERVER_URL}/src"
 end
 
 task :crossdomain do |t|
