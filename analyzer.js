@@ -87,9 +87,9 @@ DataFrame.prototype = {
   },
 
   columnRangeSum: function(a, b) {
-	var t0 = (new Date).getTime();
+	//var t0 = (new Date).getTime();
 	sum = this.addColumns_subdivide(a, b);
-	Debug.write((new Date).getTime()-t0);
+	//Debug.write((new Date).getTime()-t0);
 	return sum;
   },
   
