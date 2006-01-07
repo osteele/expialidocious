@@ -4,12 +4,12 @@ require 'openlaszlo_tasks'
 
 SERVER_URL = 'osteele@osteele.com:expialidocio.us'
 UPLOADS = %w{expialidocious.swf index.html proxy.php favicon.ico javascript about}
-PUBLIC_SOURCES=%w{expialidocious.png analyzer.js expialidocious.lzx histogram.lzx colors.js login.lzx thumb.lzx}
+PUBLIC_SOURCES=%w{expialidocious.png analyzer.js expialidocious.lzx histogram.lzx colors.js login.lzx thumb.lzx cloud.lzx}
 ABOUT_HTML = FileList.new 'about/*.html'
 ABOUT_MASTER = 'about/about.html'
 
 task :default => :deploy
-CLEAN.include 'cloud.swf'
+CLEAN.include 'expialidocious.swf'
 
 file 'expialidocious.swf' => FileList.new('*.lzx') + FileList.new('*.js')
 

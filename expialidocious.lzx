@@ -22,6 +22,11 @@ coupling between the different views.
   <include href="histogram.lzx"/>
   <splash/>
   
+  <script>
+    // The ondata handler for postData sets this.
+    var TagData = null;
+  </script>
+
   <dataset name="postData" src="http:data.xml"
 	   ondata="canvas.processPostDataset()"/>
   
