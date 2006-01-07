@@ -6,6 +6,12 @@ This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAl
 http://creativecommons.org/licenses/by-nc-sa/2.5/.
 */
 
+/*
+Implementation notes:
+- This code uses the optimization that array[i]=n is faster than array.push(n)
+in the AVM. <http://www.openlaszlo.org/docs/guide/performance-tuning.html>
+ */
+
 var DataFrame = function () {
   this.rowNames = [];
   this.columnNames = [];
@@ -21,10 +27,10 @@ DataFrame.prototype = {
 	// create new columns on demand
     if (!(i >= 0)) {
       i = this.columnNameIndices[name] = this.columnNames.length;
+	  var column = new Array(this.rowNames.length);
+	  for (var j = 0; j < column.length; j++)
+        column[j] = 0;
       this.columnNames.push(name);
-	  var column = [];
-	  for (var j = 0; j < this.rowNames.length; j++)
-        column.push(0);
       this.columns.push(column);
     }
 	return i;
@@ -38,21 +44,19 @@ DataFrame.prototype = {
 	  this.rowNames.push(name);
 	  // fill up new rows, to keep the matrix rectangular
 	  for (var i = 0; i < this.columns.length; i++)
-		this.columns[i].push(0);
+		this.columns[i][j] = 0;
 	}
 	return j;
   },
   
   addColumns_iterate: function (a, b) {
-    var sum = [];
+	var sum = new Array(this.columnNames.length);
+	for (var j = 0; j < sum.length; j++) sum[j] = 0;
     for (var i = a; i < b; i++) {
       var column = this.columns[i];
-      for (var t = 0; t < column.length; t++) {
-        while (t >= sum.length) sum.push(0);
+      for (var t = 0; t < column.length; t++)
         sum[t] += column[t];
-      }
     }
-    while (sum.length < this.rowNames.length) sum.push(0);
     return sum;
   },
   
@@ -62,9 +66,9 @@ DataFrame.prototype = {
 	var s0 = a < middle && this.addColumns_subdivide(a, Math.min(b, middle-1), left, middle);
 	var s1 = middle <= b && this.addColumns_subdivide(Math.max(a, middle), b, middle, right);
 	if (!s0 || !s1) return s0 || s1;
-	var sum = [];
+	var sum = new Array(s0.length);
 	for (var i = 0; i < s0.length; i++)
-	  sum.push(s0[i]+s1[i]);
+	  sum[i] = s0[i] + s1[i];
 	return sum;
   },
   
@@ -83,21 +87,20 @@ DataFrame.prototype = {
   },
 
   columnRangeSum: function(a, b) {
-	//var t0 = (new Date).getTime();
+	var t0 = (new Date).getTime();
 	sum = this.addColumns_subdivide(a, b);
-	//Debug.write((new Date).getTime()-t0);
+	Debug.write((new Date).getTime()-t0);
 	return sum;
   },
   
   getColumnSums: function () {
-    var sums = [];
+	var sums = new Array(this.columns.length);
     for (var i = 0; i < this.columns.length; i++) {
       var column = this.columns[i];
       var sum = 0;
-      for (var t = 0; t < column.length; t++) {
-        sum += column[t];
-      }
-      sums.push(sum);
+      for (var j = 0; j < column.length; j++)
+        sum += column[j];
+      sums[i] = sum;
     }
     return sums;
   }

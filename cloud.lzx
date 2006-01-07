@@ -47,7 +47,6 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
         root.attributes['code'] == '401' ?
         "Del.icio.us didn't accept your username and password.  Please try again.<br/><font size='10' color='#000'>If the problem persists, del.icio.us may be refusing requests from the expialidocio.us server.  If you're certain you got your name and password right, please try again tomorrow.</font>" :
         LzBrowser.urlUnescape(postData.attributes['message']);
-      Debug.write(message);
       loginView.errorMessage.setAttribute('text', message);
       return appstate.setAttribute('state', 'login');
     }
@@ -57,7 +56,9 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
     appstate.setAttribute('state', 'running');
     
     TagData = new DataFrame;
+    //var t0 = (new Date).getTime();
     fillTagFrame(TagData, root.childNodes);
+    //Debug.write('fill', (new Date).getTime-t0);
     
     SortedTags = [].concat(TagData.rowNames);
     SortedTags.sort();
