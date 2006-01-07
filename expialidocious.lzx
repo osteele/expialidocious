@@ -8,7 +8,7 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
 <canvas proxied="false" title="expialidocio.us" height="100%">
   <include href="incubator/roundrectbutton.lzx"/>
   <include href="incubator/ulink.lzx"/>
-  <include href="thumb.lzx"/>
+  <include href="histogram.lzx"/>
   <script src="analyzer.js"/>
   <script src="colors.js"/>
   <splash/>
@@ -64,11 +64,11 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
     SortedTags.sort();
     TagSortInverse = computeArrayinversion(SortedTags, TagData.rowNames);
     
-    histogram.drawGraph();
+    bars.drawGraph();
     allStart.setText(TagData.columnNames[0]);
     allEnd.setText(TagData.columnNames[TagData.columnNames.length - 1]);
     var cn = Math.floor(TagData.columns.length/3);
-    histogram.selector.setRange(cn, TagData.columns.length-cn);
+    bars.selector.setRange(cn, TagData.columns.length-cn);
     myview.animate('opacity', 1.0, 1000);
     credits.animate('y', myview.y+myview.height+40, 0);
   ]]></method>
@@ -148,12 +148,12 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
   <drawview id="funnel" x="${cloud.x}" width="${cloud.width}" height="50">
     <dateLabel id="currentStart" align="left" valign="bottom"/>
     <dateLabel id="currentEnd" align="right" valign="bottom"/>
-    <method name="update" event="onx" reference="histogram.selector">
+    <method name="update" event="onx" reference="bars.selector">
       var h = this.height;
       var r = 20; // rounding radius
       var x0 = cloud.getAttributeRelative('x', this)-10;
-      var x1 = histogram.selector.getAttributeRelative('x', this)-10;
-      var x2 = x1+histogram.selector.getAttributeRelative('width', this);
+      var x1 = bars.selector.getAttributeRelative('x', this)-10;
+      var x2 = x1+bars.selector.getAttributeRelative('width', this);
       var x3 = x0+cloud.getAttributeRelative('width', this);
       clear();
       beginPath();
@@ -168,20 +168,20 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
       this.fillStyle = cloud.bgcolor;
       var g = this.createLinearGradient(0, 0, 0, h);
       g.addColorStop(0, cloud.bgcolor);
-      g.addColorStop(1, histogram.bgcolor);
+      g.addColorStop(1, bars.bgcolor);
       this.fillStyle = g;
       fill();
     </method>
-    <method event="onwidth" reference="histogram.selector">
+    <method event="onwidth" reference="bars.selector">
       update();
     </method>
   </drawview>
   
   <!-- The date*postings histogram... -->
-  <include href="histogram.lzx"/>
+  <histogram id="bars" x="25%" width="50%" y="210" height="100"/>
   
   <!-- and its labels. -->
-  <view x="${histogram.x}" width="${histogram.width}">
+  <view x="${bars.x}" width="${bars.width}">
     <dateLabel id="allStart" fontsize="18" align="left"/>
     <dateLabel id="allEnd" fontsize="18" align="right"/>
   </view>

@@ -6,9 +6,11 @@ This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAl
 http://creativecommons.org/licenses/by-nc-sa/2.5/.
 -->
 
-  <drawview id="histogram"
-            y="210" x="25%" width="50%" height="100"
-            bgcolor="#d0d0ff">
+<library>
+  <include href="thumb.lzx"/>
+  
+  <class name="histogram" extends="drawview"
+	 bgcolor="#d0d0ff">
     <method name="drawGraph" event="onwidth"><![CDATA[
       if (appstate.state != 'running') return;
       var sums = TagData.getColumnSums();
@@ -39,13 +41,13 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
         if (d0 < 0) return;
         if (d1 > TagData.columns.length) return;
         if (d0 >= d1) return;
-        var w = histogram.step;
+        var w = classroot.step;
         animate('x', d0*w, 200);
         animate('width', (d1-d0)*w, 200);
         cloud.setRange(d0, d1);
       ]]></method>
       <method name="setXRange" args="x0, x1">
-        var w = histogram.step;
+        var w = classroot.step;
         if (x0 == null) x0 = this.x;
         if (x1 == null) x1 = x0 + this.width;
         var d0 = Math.floor(x0/w);
@@ -96,4 +98,6 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
         </state>
       </thumb>
     </view>
-  </drawview>
+  </class>
+</library>
+
