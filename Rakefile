@@ -40,16 +40,15 @@ file 'about/proxy.php.txt' => 'proxy.php' do |t|
 end
 
 task :deploy_sources do
-  sh "rsync -avz -e ssh #{PUBLIC_SOURCES.join(' ')} #{SERVER_URL}/src"
+  rsync PUBLIC_SOURCES, "#{SERVER_URL}/src"
 end
 
 task :deploy_about => FileList.new('about/*') do |t|
-  sh "rsync -avz -e ssh --exclude=.svn about #{SERVER_URL}"
+  rsync 'about', SERVER_URL
 end
 
 task :deploy => UPLOADS + [:deploy_sources, :deploy_about] do
-  SERVER_URL = "osteele@osteele.com:expialidocio.us" 
-  sh "rsync -avz -e ssh --exclude=.svn #{UPLOADS.join(' ')} #{SERVER_URL}"
+  rsync UPLOADS, SERVER_URL
 end
 
 task :crossdomain do |t|
@@ -64,7 +63,6 @@ EOF
   ip = open('http://www.whatismyip.com/').read =~ /Your IP\s*-\s*([\d.]*)/ && $1
   puts "ip = #{ip}"
   s.gsub!(/(domain=")\*(")/, "\\1#{ip}\\2")
-  #puts s
   File.open('crossdomain.xml', 'w') do |f| f << s end
-  sh "rsync -avz -e ssh crossdomain.xml osteele@osteele.com:expialidociou.us"
+  rsync 'crossdomain.xml', SERVER_URL
 end
