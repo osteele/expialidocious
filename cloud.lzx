@@ -1,0 +1,49 @@
+<!--
+Copryight 2005-2006 Oliver steele.  Some rights reserved.
+$LastChangedDate: 2006-01-07 08:20:44 -0500 (Sat, 07 Jan 2006) $
+
+This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 2.5 License:
+http://creativecommons.org/licenses/by-nc-sa/2.5/.
+-->
+
+<library>
+  <class name="tagcloud">
+    <attribute name="rangeMin" value="null"/>
+    <attribute name="rangeMax" value="null"/>
+    <method name="setRange" args="a,b"><![CDATA[
+      if (arguments.length < 1) a = 0;
+      if (arguments.length < 2) b = TagData.columns.length;
+      if (a == rangeMin && b == rangeMax) return;
+      currentStart.setText(TagData.columnNames[a]);
+      currentEnd.setText(TagData.columnNames[b-1]);
+      this.rangeMin = a;
+      this.rangeMax = b;
+      var tagCounts = TagData.columnRangeSum(a, b);
+      
+      var max = 0;
+      var min = 100;
+      for (var i = 0; i < tagCounts.length; i++) {
+        var c = tagCounts[i];
+        if (c > max) max = c;
+        if (c < min) min = c;
+      }
+      
+      str = '';
+      for (var i = 0; i < tagCounts.length; i++) {
+        var tagname = SortedTags[i];
+        var count = tagCounts[TagSortInverse[i]];
+        if (!count) continue;
+        var s = (count - min) / (max - min);
+        var c = Math.floor(255*(1-1.0*s));
+        var fontsize = 10+12*s;
+        // TODO: change this to cloud.fgcolor
+        var color = long2css(interpolateColors(cloud.bgcolor, 0x0000FF, 0.25+0.75*s));
+        var label = '<font size=\"' + fontsize + '" color="' + color + '">' + tagname + ' </font>'
+        var url = 'http://del.icio.us/' + appstate.username + '/' + tagname
+        str += '<a href=\"' + url + '\" target="_blank">' + label + '</a>'
+      }
+      tags.setText(str);
+    ]]></method>
+    <text name="tags" multiline="true" width="100%" height="100%"/>
+  </class>
+</library>

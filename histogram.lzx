@@ -12,7 +12,7 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
   <class name="histogram" extends="drawview"
 	 bgcolor="#d0d0ff">
     <method name="drawGraph" event="onwidth"><![CDATA[
-      if (appstate.state != 'running') return;
+      if (!TagData) return;
       var sums = TagData.getColumnSums();
       var w = this.step = width/sums.length;
       var max = 0;
@@ -31,10 +31,6 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
       this.fill();
       selector.setRange(0, sums.length);
     ]]></method>
-    
-    <!--method event="onclick">
-      selector.setXRange(getMouse('x'), null);
-    </method-->
     
     <view name="selector" height="100%">
       <method name="setRange" args="d0, d1"><![CDATA[
