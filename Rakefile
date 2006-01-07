@@ -3,17 +3,17 @@ require 'ows_tasks'
 require 'openlaszlo_tasks'
 
 SERVER_URL = 'osteele@osteele.com:expialidocio.us'
-UPLOADS = %w{cloud.swf index.html proxy.php favicon.ico javascript about}
-PUBLIC_SOURCES=%w{expialidocious.png analyzer.js cloud.lzx colors.js login.lzx thumb.lzx}
+UPLOADS = %w{expialidocious.swf index.html proxy.php favicon.ico javascript about}
+PUBLIC_SOURCES=%w{expialidocious.png analyzer.js expialidocious.lzx histogram.lzx colors.js login.lzx thumb.lzx}
 ABOUT_HTML = FileList.new 'about/*.html'
 ABOUT_MASTER = 'about/about.html'
 
 task :default => :deploy
 CLEAN.include 'cloud.swf'
 
-file 'cloud.swf' => ['analyzer.js', 'colors.js', 'thumb.lzx']
+file 'expialidocious.swf' => FileList.new('*.lzx') + FileList.new('*.js')
 
-(ABOUT_HTML - ABOUT_MASTER].each do |f|
+(ABOUT_HTML - [ABOUT_MASTER]).each do |f|
   file f => ABOUT_MASTER do |t|
     source = File.open(ABOUT_MASTER).read
     header = source =~ /^.*<!--header:end-->/m && $&

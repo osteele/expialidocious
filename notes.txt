@@ -56,3 +56,18 @@ array: CURLOPT_HTTPHEADER
 		return strlen($strHeader);
 	}
 	
+
+
+
+/*
+fill:
+- original: 1203
+- getColumnIndex: 1060, 1296, 1056
+- getRowIndex: 939, 1050, 1058
+
+range:
+- 1379, 59; 2210, 61
+- 1206, 60
+- 1259, 69
+- 992, 47
+*/
