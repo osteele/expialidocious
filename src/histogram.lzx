@@ -11,9 +11,15 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
   
   <class name="histogram" extends="drawview"
 	 bgcolor="#d0d0ff">
+    <attribute name="data" value="${appstate.data}"/>
+    <method event="ondata" reference="appstate">
+      this.drawGraph();
+    </method>
     <method name="drawGraph" event="onwidth"><![CDATA[
-      if (!TagData) return;
-      var sums = TagData.getColumnSums();
+      clear();
+      var data = appstate.data;
+      if (!data) return;
+      var sums = data.getColumnSums();
       var w = this.step = width/sums.length;
       var max = 0;
       for (var i = 0; i < sums.length; i++)
@@ -35,12 +41,13 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
     <view name="selector" height="100%">
       <method name="setRange" args="d0, d1"><![CDATA[
         if (d0 < 0) return;
-        if (d1 > TagData.columns.length) return;
+        if (d1 > appstate.data.columns.length) return;
         if (d0 >= d1) return;
         var w = classroot.step;
         animate('x', d0*w, 200);
         animate('width', (d1-d0)*w, 200);
-        cloud.setRange(d0, d1);
+        if (d0 != appstate.range[0] || d1 != appstate.range[1])
+          appstate.setAttribute('range', [d0, d1]);
       ]]></method>
       <method name="setXRange" args="x0, x1">
         var w = classroot.step;
@@ -49,6 +56,9 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
         var d0 = Math.floor(x0/w);
         var d1 = Math.floor(x1/w);
         this.setRange(d0, d1);
+      </method>
+      <method event="onrange" reference="appstate">
+        this.setRange(appstate.range[0], appstate.range[1]);
       </method>
       
       <!-- masks -->

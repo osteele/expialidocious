@@ -10,15 +10,25 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
   <class name="tagcloud">
     <attribute name="rangeMin" value="null"/>
     <attribute name="rangeMax" value="null"/>
+    <attribute name="sortedTags" value="null"/>
+    <method name="makeInverseTable">
+      var data = appstate.data;
+      this.sortedTags = [].concat(data.rowNames);
+      this.sortedTags.sort();
+      this.tagSortInverse = computeArrayinversion(this.sortedTags, data.rowNames);
+    </method>
     <method name="setRange" args="a,b"><![CDATA[
+      var data = appstate.data;
       if (arguments.length < 1) a = 0;
-      if (arguments.length < 2) b = TagData.columns.length;
+      if (arguments.length < 2) b = data.columns.length;
       if (a == rangeMin && b == rangeMax) return;
-      currentStart.setText(TagData.columnNames[a]);
-      currentEnd.setText(TagData.columnNames[b-1]);
+      currentStart.setText(data.columnNames[a]);
+      currentEnd.setText(data.columnNames[b-1]);
       this.rangeMin = a;
       this.rangeMax = b;
-      var tagCounts = TagData.columnRangeSum(a, b);
+      var tagCounts = data.columnRangeSum(a, b);
+      
+      this.sortedTags || this.makeInverseTable();
       
       var max = 0;
       var min = 100;
@@ -30,13 +40,14 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
       
       str = '';
       for (var i = 0; i < tagCounts.length; i++) {
-        var tagname = SortedTags[i];
-        var count = tagCounts[TagSortInverse[i]];
+        var tagname = this.sortedTags[i];
+        var count = tagCounts[this.tagSortInverse[i]];
         if (!count) continue;
         var s = (count - min) / (max - min);
         var c = Math.floor(255*(1-1.0*s));
         var fontsize = 10+12*s;
-        // TODO: change this to cloud.fgcolor
+        // can't use fgcolor to control this, since fgcolor takes precedence
+        // of <font> colors
         var color = long2css(interpolateColors(cloud.bgcolor, 0x0000FF, 0.25+0.75*s));
         var label = '<font size=\"' + fontsize + '" color="' + color + '">' + tagname + ' </font>'
         var url = 'http://del.icio.us/' + appstate.username + '/' + tagname
@@ -44,6 +55,9 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
       }
       tags.setText(str);
     ]]></method>
+    <method event="onrange" reference="appstate">
+      this.setRange(appstate.range[0], appstate.range[1]);
+    </method>
     <text name="tags" multiline="true" width="100%" height="100%"/>
   </class>
 </library>

@@ -10,8 +10,7 @@ http://creativecommons.org/licenses/by-nc-sa/2.5/.
 Implementation notes:
 - These sources are made available more in the spirit of getting something
 out there than as a well-factored framework.  This was a quck-and-dirty
-project, and it still shows.  In particular, there's still a lot of
-coupling between the different views.
+project, and it still shows.
 -->
 <canvas proxied="false" title="expialidocio.us" height="100%">
   <include href="incubator/roundrectbutton.lzx"/>
@@ -22,11 +21,6 @@ coupling between the different views.
   <include href="histogram.lzx"/>
   <splash/>
   
-  <script>
-    // The ondata handler for postData sets this.
-    var TagData = null;
-  </script>
-
   <dataset name="postData" src="http:data.xml"
 	   ondata="canvas.processPostDataset()"/>
   
@@ -36,6 +30,8 @@ coupling between the different views.
   <node id="appstate">
     <attribute name="username" type="string" value=""/>
     <attribute name="state" type="string" value="login"/>
+    <attribute name="data" value="null"/>
+    <attribute name="range" value="null"/>
     <method name="signin" args="username, password">
       loginView.errorMessage.setAttribute('text', '');
       appstate.setAttribute('username', username);
@@ -71,46 +67,21 @@ coupling between the different views.
     <tagcloud id="cloud" width="${parent.width-20}" x="10" height="200"
 	      bgcolor="#f0f0ff"/>
     
-    <!-- The funnel from the histogram to the cloud. -->>
-    <drawview id="funnel" x="${cloud.x}" width="${cloud.width}" height="50">
-      <dateLabel id="currentStart" align="left" valign="bottom"/>
-      <dateLabel id="currentEnd" align="right" valign="bottom"/>
-      <method name="update" event="onx" reference="bars.selector">
-	var h = this.height;
-	var r = 20; // rounding radius
-	var x0 = cloud.getAttributeRelative('x', this)-10;
-	var x1 = bars.selector.getAttributeRelative('x', this)-10;
-	var x2 = x1+bars.selector.getAttributeRelative('width', this);
-	var x3 = x0+cloud.getAttributeRelative('width', this);
-	clear();
-	beginPath();
-	moveTo(x0, 0);
-	quadraticCurveTo(x0, r, x0+r, r)
-	lineTo(x1-r, h-r);
-	quadraticCurveTo(x1, h-r, x1, h);
-	lineTo(x2, h);
-	quadraticCurveTo(x2, h-r, x2+r, h-r);
-	lineTo(x3-r, r);
-	quadraticCurveTo(x3, r, x3, 0);
-	this.fillStyle = cloud.bgcolor;
-	var g = this.createLinearGradient(0, 0, 0, h);
-	g.addColorStop(0, cloud.bgcolor);
-	g.addColorStop(1, bars.bgcolor);
-	this.fillStyle = g;
-	fill();
-      </method>
-      <method event="onwidth" reference="bars.selector">
-	update();
-      </method>
-    </drawview>
+    <!-- The funnel from the histogram to the cloud. -->
+    <include href="funnel.lzx"/>
     
     <!-- The date*postings histogram... -->
     <histogram id="bars" x="25%" width="50%" y="210" height="100"/>
     
     <!-- and its labels. -->
     <view x="${bars.x}" width="${bars.width}">
-      <dateLabel id="allStart" fontsize="18" align="left"/>
-      <dateLabel id="allEnd" fontsize="18" align="right"/>
+      <method name="update" event="ondata" reference="appstate">
+        var names = appstate.data.columnNames;
+        start.setText(names[0]);
+        end.setText(names[names.length-1]);
+      </method>
+      <dateLabel name="start" fontsize="18" align="left"/>
+      <dateLabel name="end" fontsize="18" align="right"/>
     </view>
   </view>
   
@@ -180,20 +151,16 @@ coupling between the different views.
     appstate.setAttribute('username', root.attributes['user']);
     appstate.setAttribute('state', 'running');
     
-    TagData = new DataFrame;
+    var data = new DataFrame;
     //var t0 = (new Date).getTime();
-    fillTagFrame(TagData, root.childNodes);
+    fillTagFrame(data, root.childNodes);
     //Debug.write('fill', (new Date).getTime-t0);
+        
+    appstate.setAttribute('data', data);
     
-    SortedTags = [].concat(TagData.rowNames);
-    SortedTags.sort();
-    TagSortInverse = computeArrayinversion(SortedTags, TagData.rowNames);
+    var cn = Math.floor(data.columns.length/3);
+    appstate.setAttribute('range', [cn, data.columns.length-cn]);
     
-    bars.drawGraph();
-    allStart.setText(TagData.columnNames[0]);
-    allEnd.setText(TagData.columnNames[TagData.columnNames.length - 1]);
-    var cn = Math.floor(TagData.columns.length/3);
-    bars.selector.setRange(cn, TagData.columns.length-cn);
     resultsView.animate('opacity', 1.0, 1000);
     credits.animate('y', resultsView.y+resultsView.height+40, 0);
   ]]></method>
