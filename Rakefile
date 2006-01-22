@@ -4,7 +4,7 @@ require 'openlaszlo_tasks'
 
 SERVER_URL = 'osteele@osteele.com:expialidocio.us'
 UPLOADS = %w{expialidocious.swf index.html proxy.php favicon.ico javascript about}
-PUBLIC_SOURCES=%w{expialidocious.png analyzer.js expialidocious.lzx histogram.lzx colors.js login.lzx thumb.lzx cloud.lzx}
+PUBLIC_SOURCES=FileList.new('src/*')-%w{about/main.lzx.swf about/base64.js about/taglines.lzx}
 ABOUT_HTML = FileList.new 'about/*.html'
 ABOUT_MASTER = 'about/about.html'
 
@@ -40,7 +40,7 @@ file 'about/proxy.php.txt' => 'proxy.php' do |t|
 end
 
 task :deploy_sources do
-  rsync PUBLIC_SOURCES, "#{SERVER_URL}/src"
+  rsync PUBLIC_SOURCES, "#{SERVER_URL}/src", '--delete'
 end
 
 task :deploy_about => FileList.new('about/*') do |t|
@@ -51,6 +51,7 @@ task :deploy => UPLOADS + [:deploy_sources, :deploy_about] do
   rsync UPLOADS, SERVER_URL
 end
 
+desc "Update the server crossdomain.xml to allow connections (only) from this host."
 task :crossdomain do |t|
   s = <<EOF
 <?xml version="1.0"?>
@@ -60,7 +61,8 @@ task :crossdomain do |t|
 </cross-domain-policy>
 EOF
   require 'open-uri'
-  ip = open('http://www.whatismyip.com/').read =~ /Your IP\s*-\s*([\d.]*)/ && $1
+  ip = open('http://www.whatismyip.com/').read[/Your IP.*([\d.]+)/i, 1]
+  raise "Couldn't retrieve IP address" unless ip
   puts "ip = #{ip}"
   s.gsub!(/(domain=")\*(")/, "\\1#{ip}\\2")
   File.open('crossdomain.xml', 'w') do |f| f << s end
