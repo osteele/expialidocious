@@ -4,7 +4,7 @@ require 'openlaszlo_tasks'
 
 SERVER_URL = 'osteele@expialidocio.us:expialidocio.us'
 UPLOADS = %w{expialidocious.swf index.html proxy.php favicon.ico javascript about}
-PUBLIC_SOURCES=FileList.new('src/*')-%w{about/main.lzx.swf about/base64.js about/taglines.lzx}
+PUBLIC_SOURCES=FileList.new('src/*')-%w{about/base64.js about/taglines.lzx}
 ABOUT_HTML = FileList.new 'about/*.html'
 ABOUT_MASTER = 'about/about.html'
 
