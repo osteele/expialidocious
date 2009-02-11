@@ -9,7 +9,7 @@
   //
   // Configuration:
   //
-$url = "http://del.icio.us/api/posts/all";
+$url = "https://api.del.icio.us/v1/posts/all";
 $user_agent = 'expialidocio.us';
 $authentication_prompt = 'del.iciou.us account info';
 // Interval, in seconds, between requests.  The del.icio.us terms of
