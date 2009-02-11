@@ -1,5 +1,5 @@
 /*
-Copryight 2005-2006 Oliver steele.  Some rights reserved.
+Copyright 2005-2006 Oliver Steele.  Some rights reserved.
 $LastChangedDate$
 
 This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 2.5 License:
