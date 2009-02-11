@@ -11,7 +11,13 @@ ABOUT_MASTER = 'about/about.html'
 task :default => :deploy
 CLEAN.include 'expialidocious.swf'
 
-file 'expialidocious.swf' => FileList.new('*.lzx') + FileList.new('*.js')
+task :applet => 'expialidocious.swf'
+file 'expialidocious.swf' => FileList.new('src/*.lzx') + FileList.new('src/*.js') do |t|
+  source = 'src/expialidocious.lzx' #t.prerequisites.first
+  puts "Compiling #{source} => #{t.name}" if verbose
+  fname = OpenLaszlo::compile source, :output => t.name
+#  mv fname, t.name
+end
 
 (ABOUT_HTML - [ABOUT_MASTER]).each do |f|
   file f => ABOUT_MASTER do |t|
