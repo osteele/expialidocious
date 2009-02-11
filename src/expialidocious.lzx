@@ -127,6 +127,7 @@ project, and it still shows.
       } else {
         url = 'http:tests/' + source + '.xml';
       }
+      url = '/proxy.php';
       Debug.write(url);
       postData.setSrc(url);
       appstate.setAttribute('state', 'retrieving');
