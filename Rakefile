@@ -4,7 +4,6 @@ require 'openlaszlo_tasks'
 
 SERVER_URL = 'osteele@expialidocio.us:expialidocio.us'
 UPLOADS = %w{expialidocious.swf index.html proxy.php favicon.ico javascript about}
-PUBLIC_SOURCES=FileList.new('src/*')-%w{about/base64.js about/taglines.lzx}
 ABOUT_HTML = FileList.new 'about/*.html'
 ABOUT_MASTER = 'about/about.html'
 
@@ -19,6 +18,7 @@ file 'expialidocious.swf' => FileList.new('src/*.lzx') + FileList.new('src/*.js'
 #  mv fname, t.name
 end
 
+# Yecch!  But this was the state of my rake-fu in 2006...
 (ABOUT_HTML - [ABOUT_MASTER]).each do |f|
   file f => ABOUT_MASTER do |t|
     source = File.open(ABOUT_MASTER).read
@@ -45,16 +45,8 @@ file 'about/proxy.php.txt' => 'proxy.php' do |t|
   cp t.prerequisites.first, t.name
 end
 
-task :deploy_sources do
-  rsync PUBLIC_SOURCES, "#{SERVER_URL}/src", '--delete'
-end
-
-task :deploy_about => FileList.new('about/*') do |t|
-  rsync 'about', SERVER_URL
-end
-
-task :deploy => UPLOADS + [:deploy_sources, :deploy_about] do
-  rsync UPLOADS, SERVER_URL
+task :deploy => UPLOADS do
+  rsync UPLOADS, SERVER_URL, :delete_excluded => true, :verbose => true
 end
 
 desc "Update the server crossdomain.xml to allow connections (only) from this host."
