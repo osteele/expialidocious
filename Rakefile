@@ -2,7 +2,7 @@ require 'rake/clean'
 require 'ows_tasks'
 require 'openlaszlo_tasks'
 
-SERVER_URL = 'osteele@expialidocio.us:expialidocio.us'
+SERVER_URL = 'expialidocio.us:expialidocio.us'
 UPLOADS = %w{expialidocious.swf index.html proxy.php favicon.ico javascript about}
 ABOUT_HTML = FileList.new 'about/*.html'
 ABOUT_MASTER = 'about/about.html'
